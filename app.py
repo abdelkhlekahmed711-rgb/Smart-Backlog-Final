@@ -18,28 +18,28 @@ if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'user' not in st.session_state: st.session_state.user = {}
 
 # ---------------------------------------------------------
-# 2. نظام التصميم (الألوان والخلفيات)
+# 2. نظام التصميم
 # ---------------------------------------------------------
 design = {
-    'titanium': { # ثيم الشباب
-        'sidebar_bg': 'rgba(15, 23, 42, 0.9)', # كحلي غامق شفاف
+    'titanium': {
+        'sidebar_bg': 'rgba(15, 23, 42, 0.9)',
         'glass': 'rgba(15, 23, 42, 0.7)',
         'border': 'rgba(255, 255, 255, 0.1)',
         'primary': '#38bdf8',
         'text': '#f1f5f9',
-        'menu_text': '#f1f5f9', # لون نص القائمة أبيض
+        'menu_text': '#f1f5f9',
         'btn_grad': 'linear-gradient(90deg, #0ea5e9, #2563eb)',
         'lottie_welcome': "https://lottie.host/94875632-7605-473d-8065-594ea470b355/9Z53657123.json",
         'lottie_wait': "https://lottie.host/5a709b1f-d748-4b7d-949f-50a84e27771c/9qj8M4Zz2X.json",
         'chart_theme': 'plotly_dark'
     },
-    'sakura': { # ثيم البنات
-        'sidebar_bg': 'rgba(255, 240, 245, 0.85)', # وردي فاتح جداً شفاف
+    'sakura': {
+        'sidebar_bg': 'rgba(255, 240, 245, 0.85)',
         'glass': 'rgba(255, 255, 255, 0.65)',
         'border': 'rgba(255, 182, 193, 0.8)',
         'primary': '#db2777',
         'text': '#4a4a4a', 
-        'menu_text': '#4a4a4a', # لون نص القائمة غامق عشان يبان
+        'menu_text': '#4a4a4a',
         'btn_grad': 'linear-gradient(90deg, #ec4899, #d946ef)',
         'lottie_welcome': "https://lottie.host/c750516b-4566-4148-89c0-8260a927054f/1I3k9s6X6q.json",
         'lottie_wait': "https://lottie.host/d2d9c049-14a5-4303-9dcd-e06915354972/uOqD6lB0qW.json",
@@ -49,7 +49,7 @@ design = {
 
 theme = design[st.session_state.theme]
 
-# --- كود الخلفيات المتحركة (CSS Animation) ---
+# الخلفيات
 bg_css = ""
 if st.session_state.theme == 'titanium':
     bg_css = """
@@ -68,7 +68,6 @@ if st.session_state.theme == 'titanium':
     }
     """
 else:
-    # خلفية البنات (فقاعات ناعمة متحركة)
     bg_css = """
     .stApp {
         background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #ffd1ff);
@@ -82,7 +81,6 @@ else:
     }
     """
 
-# --- حقن CSS (تم إضافة !important لإجبار المتصفح على الألوان) ---
 st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=El+Messiri:wght@400;500;600;700&display=swap');
@@ -91,14 +89,19 @@ h1, h2, h3, .stMetricLabel {{ font-family: 'El Messiri', sans-serif !important; 
 
 {bg_css}
 
-/* إجبار القائمة الجانبية على اللون المختار */
+/* --- هنا كود الإخفاء الجديد (Clean Mode) --- */
+/* إخفاء القائمة العلوية (3 شرط) والشريط العلوي */
+#MainMenu {{visibility: hidden;}}
+header {{visibility: hidden;}}
+footer {{visibility: hidden;}}
+[data-testid="stToolbar"] {{visibility: hidden; top: -50px;}} /* إخفاء شريط Share و GitHub */
+/* ------------------------------------------ */
+
 section[data-testid="stSidebar"] {{
-    background-color: {theme['sidebar_bg']} !important; /* هام جداً */
-    backdrop-filter: blur(20px);
-    border-right: 1px solid {theme['border']};
+    background-color: {theme['sidebar_bg']} !important;
+    backdrop-filter: blur(20px); border-right: 1px solid {theme['border']};
 }}
 
-/* تصحيح لون النصوص داخل القائمة */
 section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] div {{
     color: {theme['menu_text']} !important;
 }}
@@ -106,7 +109,6 @@ section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2, sectio
     color: {theme['primary']} !important;
 }}
 
-/* البطاقات الزجاجية */
 .glass-card {{
     background: {theme['glass']};
     backdrop-filter: blur(16px);
@@ -117,26 +119,22 @@ section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2, sectio
 }}
 .glass-card:hover {{ transform: translateY(-5px); }}
 
-/* الأزرار */
 div.stButton > button {{
     background: {theme['btn_grad']}; color: white; border: none; padding: 10px 24px;
     border-radius: 12px; font-weight: bold; width: 100%; transition: 0.3s;
 }}
 div.stButton > button:hover {{ transform: scale(1.02); }}
 
-/* الحقول */
 .stTextInput input, .stNumberInput input, .stPasswordInput input {{
     background: rgba(255, 255, 255, 0.2) !important;
     border: 1px solid {theme['border']} !important;
     color: {theme['text']} !important; border-radius: 12px !important;
 }}
 
-/* العناوين العامة */
 h1, h2, h3 {{ color: {theme['primary']} !important; }}
 p, span, label, div {{ color: {theme['text']}; }}
 
-#MainMenu {{visibility: hidden;}} footer {{visibility: hidden;}}
-.block-container {{ padding-top: 1.5rem; }}
+.block-container {{ padding-top: 0rem; }} /* تقليل المسافة العلوية لأننا أخفينا الشريط */
 </style>
 """, unsafe_allow_html=True)
 
@@ -228,7 +226,6 @@ def main_app():
         </div>
         """, unsafe_allow_html=True)
 
-        # --- القائمة الشفافة ---
         menu = option_menu("القائمة", ["الرئيسية", "إضافة مادة", "الخطة"], 
             icons=['house', 'plus-circle', 'table'], menu_icon="cast", default_index=0,
             styles={
