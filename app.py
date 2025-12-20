@@ -1,276 +1,325 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import datetime
 import os
-import random
 import requests
 import time
+import random
 from streamlit_lottie import st_lottie
+from streamlit_option_menu import option_menu
 
 # ---------------------------------------------------------
 # 1. إعدادات الصفحة
 # ---------------------------------------------------------
 st.set_page_config(page_title="SmartBacklog Pro", page_icon="🎓", layout="wide")
 
-# اسم ملف قاعدة البيانات
-DB_FILE = 'smart_backlog_db.csv'
+if 'theme' not in st.session_state: st.session_state.theme = 'titanium'
+if 'logged_in' not in st.session_state: st.session_state.logged_in = False
+if 'user' not in st.session_state: st.session_state.user = {}
 
 # ---------------------------------------------------------
-# 2. تسريع الموقع (Caching)
+# 2. نظام التصميم (الألوان والخلفيات)
 # ---------------------------------------------------------
+design = {
+    'titanium': { # ثيم الشباب
+        'sidebar_bg': 'rgba(15, 23, 42, 0.9)', # كحلي غامق شفاف
+        'glass': 'rgba(15, 23, 42, 0.7)',
+        'border': 'rgba(255, 255, 255, 0.1)',
+        'primary': '#38bdf8',
+        'text': '#f1f5f9',
+        'menu_text': '#f1f5f9', # لون نص القائمة أبيض
+        'btn_grad': 'linear-gradient(90deg, #0ea5e9, #2563eb)',
+        'lottie_welcome': "https://lottie.host/94875632-7605-473d-8065-594ea470b355/9Z53657123.json",
+        'lottie_wait': "https://lottie.host/5a709b1f-d748-4b7d-949f-50a84e27771c/9qj8M4Zz2X.json",
+        'chart_theme': 'plotly_dark'
+    },
+    'sakura': { # ثيم البنات
+        'sidebar_bg': 'rgba(255, 240, 245, 0.85)', # وردي فاتح جداً شفاف
+        'glass': 'rgba(255, 255, 255, 0.65)',
+        'border': 'rgba(255, 182, 193, 0.8)',
+        'primary': '#db2777',
+        'text': '#4a4a4a', 
+        'menu_text': '#4a4a4a', # لون نص القائمة غامق عشان يبان
+        'btn_grad': 'linear-gradient(90deg, #ec4899, #d946ef)',
+        'lottie_welcome': "https://lottie.host/c750516b-4566-4148-89c0-8260a927054f/1I3k9s6X6q.json",
+        'lottie_wait': "https://lottie.host/d2d9c049-14a5-4303-9dcd-e06915354972/uOqD6lB0qW.json",
+        'chart_theme': 'plotly_white'
+    }
+}
+
+theme = design[st.session_state.theme]
+
+# --- كود الخلفيات المتحركة (CSS Animation) ---
+bg_css = ""
+if st.session_state.theme == 'titanium':
+    bg_css = """
+    .stApp {
+        background-color: #020617;
+        background-image: 
+            radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+            radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
+            radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px);
+        background-size: 550px 550px, 350px 350px, 250px 250px;
+        animation: stars 20s linear infinite;
+    }
+    @keyframes stars {
+        0% { background-position: 0 0, 0 0, 0 0; }
+        100% { background-position: 550px 550px, 350px 350px, 250px 250px; }
+    }
+    """
+else:
+    # خلفية البنات (فقاعات ناعمة متحركة)
+    bg_css = """
+    .stApp {
+        background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #ffd1ff);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+    }
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    """
+
+# --- حقن CSS (تم إضافة !important لإجبار المتصفح على الألوان) ---
+st.markdown(f"""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=El+Messiri:wght@400;500;600;700&display=swap');
+* {{ font-family: 'Almarai', sans-serif; }}
+h1, h2, h3, .stMetricLabel {{ font-family: 'El Messiri', sans-serif !important; }}
+
+{bg_css}
+
+/* إجبار القائمة الجانبية على اللون المختار */
+section[data-testid="stSidebar"] {{
+    background-color: {theme['sidebar_bg']} !important; /* هام جداً */
+    backdrop-filter: blur(20px);
+    border-right: 1px solid {theme['border']};
+}}
+
+/* تصحيح لون النصوص داخل القائمة */
+section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] div {{
+    color: {theme['menu_text']} !important;
+}}
+section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3 {{
+    color: {theme['primary']} !important;
+}}
+
+/* البطاقات الزجاجية */
+.glass-card {{
+    background: {theme['glass']};
+    backdrop-filter: blur(16px);
+    border-radius: 24px; border: 1px solid {theme['border']};
+    padding: 30px; margin-bottom: 25px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s;
+}}
+.glass-card:hover {{ transform: translateY(-5px); }}
+
+/* الأزرار */
+div.stButton > button {{
+    background: {theme['btn_grad']}; color: white; border: none; padding: 10px 24px;
+    border-radius: 12px; font-weight: bold; width: 100%; transition: 0.3s;
+}}
+div.stButton > button:hover {{ transform: scale(1.02); }}
+
+/* الحقول */
+.stTextInput input, .stNumberInput input, .stPasswordInput input {{
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid {theme['border']} !important;
+    color: {theme['text']} !important; border-radius: 12px !important;
+}}
+
+/* العناوين العامة */
+h1, h2, h3 {{ color: {theme['primary']} !important; }}
+p, span, label, div {{ color: {theme['text']}; }}
+
+#MainMenu {{visibility: hidden;}} footer {{visibility: hidden;}}
+.block-container {{ padding-top: 1.5rem; }}
+</style>
+""", unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# 3. إدارة البيانات
+# ---------------------------------------------------------
+TASKS_DB = 'smart_tasks.csv'
+USERS_DB = 'smart_users.csv'
+
+def init_dbs():
+    if not os.path.exists(USERS_DB):
+        pd.DataFrame([{"username": "admin", "password": "123", "name": "Admin", "role": "admin"}]).to_csv(USERS_DB, index=False)
+    if not os.path.exists(TASKS_DB):
+        pd.DataFrame(columns=["المادة", "الدروس", "المحاضرات", "الصعوبة", "الأيام", "الأولوية", "الطالب"]).to_csv(TASKS_DB, index=False)
+
+def load_data(file): 
+    df = pd.read_csv(file, dtype=str)
+    if 'المحاضرات' not in df.columns and file == TASKS_DB: df['المحاضرات'] = '0'
+    return df
+def save_data(df, file): df.to_csv(file, index=False)
+init_dbs()
+
 @st.cache_data
-def load_lottieurl(url):
+def load_lottie(url):
     try:
         r = requests.get(url)
-        if r.status_code != 200:
-            return None
-        return r.json()
-    except:
-        return None
+        return r.json() if r.status_code == 200 else None
+    except: return None
 
-# تحميل الأنيميشن
-lottie_student = load_lottieurl("https://lottie.host/5a709b1f-d748-4b7d-949f-50a84e27771c/9qj8M4Zz2X.json")
-lottie_rocket = load_lottieurl("https://lottie.host/c95104d5-51e0-4f36-8488-46637213b194/Jg2v5u1v7t.json")
-lottie_done = load_lottieurl("https://lottie.host/880e6082-c84d-4447-9154-8e100d08779a/02a5f7e4.json")
+def play_sound():
+    st.markdown("""<audio autoplay><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mp3"></audio>""", unsafe_allow_html=True)
+
+quotes = ["ألم الدراسة لحظة، لكن ألم الندم مدى الحياة.", "لا تتوقف عندما تتعب، توقف عندما تنتهي.", "أحلامك تستحق منك المحاولة.", "كن قوياً لأجلك."]
 
 # ---------------------------------------------------------
-# 3. قاعدة البيانات
+# 4. الواجهة
 # ---------------------------------------------------------
-def load_data():
-    if os.path.exists(DB_FILE):
-        return pd.read_csv(DB_FILE)
-    return pd.DataFrame(columns=["المادة", "الدروس", "الصعوبة", "الأيام", "الأولوية", "الطالب"])
-
-def save_data(df):
-    df.to_csv(DB_FILE, index=False)
-
-def generate_dummy_data():
-    subjects = ["فيزياء", "كيمياء", "أحياء", "رياضيات", "عربي", "إنجليزي", "تاريخ", "جغرافيا"]
-    data = []
-    for i in range(25):
-        subj = random.choice(subjects)
-        lessons = random.randint(1, 15)
-        diff = random.randint(3, 10)
-        days = random.randint(2, 30)
-        prio = (diff * lessons) / days
-        data.append({
-            "المادة": f"{subj} - وحدة {i+1}",
-            "الدروس": lessons, "الصعوبة": diff, "الأيام": days,
-            "الأولوية": round(prio, 2), "الطالب": "طالب افتراضي"
-        })
-    df = pd.DataFrame(data)
-    save_data(df)
-    return df
-
-# ---------------------------------------------------------
-# 4. التصميم (CSS)
-# ---------------------------------------------------------
-st.markdown("""
-    <style>
-    .stApp {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        font-family: 'Tajawal', sans-serif;
-    }
-    .main, .stMarkdown, .stButton, .stDataFrame, .stTextInput { direction: rtl; text-align: right; }
-    h1, h2, h3 { color: #1a237e; font-weight: 800; }
-    
-    div[data-testid="stMetric"], div.stDataFrame, .login-box {
-        background: rgba(255, 255, 255, 0.75);
-        backdrop-filter: blur(10px);
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        border: 1px solid rgba(255,255,255,0.8);
-    }
-    .google-btn {
-        background-color: white; color: #333; border: 1px solid #ddd;
-        border-radius: 50px; padding: 10px; width: 100%;
-        display: flex; justify-content: center; align-items: center; gap: 10px;
-        font-weight: bold; cursor: pointer; transition: 0.3s;
-    }
-    .google-btn:hover { background-color: #f1f1f1; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    
-    div.stButton > button {
-        background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);
-        color: white; border-radius: 10px; border: none; padding: 10px 20px;
-        font-weight: bold; width: 100%; transition: transform 0.2s;
-    }
-    div.stButton > button:hover { transform: scale(1.02); }
-    </style>
-    """, unsafe_allow_html=True)
-
-# ---------------------------------------------------------
-# 5. صفحة تسجيل الدخول
-# ---------------------------------------------------------
-def send_recovery_email(email):
-    with st.spinner('جاري الاتصال بخوادم البريد الآمن...'):
-        time.sleep(1.5) 
-    st.success(f"✅ تم إرسال رابط إعادة التعيين إلى: {email}")
-
 def login_page():
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        st.title("🔐 بوابة المبدع الصغير")
-        st.write("سجل دخولك لبدء رحلة النجاح")
+    c1, c2, c3 = st.columns([1, 1.8, 1])
+    with c2:
+        st.write("")
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         
-        # تعريف التبويبات بشكل صحيح
-        tab_email, tab_google = st.tabs(["📧 دخول بالبريد", "G حساب جوجل"])
-        
-        # تبويب البريد الإلكتروني
-        with tab_email:
-            username = st.text_input("اسم المستخدم")
-            password = st.text_input("كلمة المرور", type="password")
-            
-            if st.button("تسجيل الدخول", key="login_btn"):
-                if username == "admin" and password == "admin":
-                    st.session_state.logged_in = True
-                    st.session_state.role = "admin"
-                    st.rerun()
-                elif username == "student" and password == "123":
-                    st.session_state.logged_in = True
-                    st.session_state.role = "student"
-                    st.rerun()
-                else:
-                    st.error("خطأ في البيانات! جرب: admin/admin أو student/123")
-            
-            with st.expander("هل نسيت كلمة المرور؟"):
-                rec_mail = st.text_input("البريد الإلكتروني للاستعادة")
-                if st.button("إرسال الرمز"):
-                    if rec_mail:
-                        send_recovery_email(rec_mail)
-                    else:
-                        st.warning("أدخل البريد أولاً")
+        cl, cr = st.columns(2)
+        with cl: 
+            if st.button("🌑 Titanium", key="thm_b", use_container_width=True): st.session_state.theme = 'titanium'; st.rerun()
+        with cr: 
+            if st.button("🌸 Sakura", key="thm_g", use_container_width=True): st.session_state.theme = 'sakura'; st.rerun()
 
-        # تبويب جوجل (تم إصلاح الخطأ هنا)
-        with tab_google:
-            st.write("الدخول السريع والآمن")
-            if st.button("Sign in with Google", key="g_login"):
-                with st.spinner('جاري المصادقة مع Google...'):
-                    time.sleep(1.5)
-                st.session_state.logged_in = True
-                st.session_state.role = "student"
-                st.balloons()
-                st.rerun()
-            
-            st.markdown("""
-            <div style="text-align: center; margin-top: 10px;">
-                <button class="google-btn">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20">
-                    استخدم حساب Google
-                </button>
-            </div>
-            """, unsafe_allow_html=True)
-            
+        st.markdown(f"<div style='text-align:center; margin-top:20px;'><h1>SmartBacklog</h1><p class='small-text'>بوابتك الذكية للتفوق الدراسي</p></div>", unsafe_allow_html=True)
+        
+        if lottie := load_lottie(theme['lottie_welcome']):
+            st_lottie(lottie, height=180, key="welcome")
+
+        tab_log, tab_reg = st.tabs(["دخول", "حساب جديد"])
+        
+        with tab_log:
+            u = st.text_input("اسم المستخدم", key="u1")
+            p = st.text_input("كلمة المرور", type="password", key="p1")
+            if st.button("دخول النظام 🚀"):
+                users = load_data(USERS_DB)
+                found = users[(users['username'] == u) & (users['password'] == p)]
+                if not found.empty:
+                    st.session_state.logged_in = True
+                    st.session_state.user = found.iloc[0].to_dict()
+                    st.rerun()
+                else: st.error("البيانات غير صحيحة")
+        
+        with tab_reg:
+            n = st.text_input("الاسم", key="n2")
+            u2 = st.text_input("يوزر جديد", key="u2")
+            p2 = st.text_input("كلمة مرور", type="password", key="p2")
+            if st.button("انضم إلينا ✨"):
+                users = load_data(USERS_DB)
+                if u2 in users['username'].values: st.error("مستخدم")
+                elif u2:
+                    save_data(pd.concat([users, pd.DataFrame([{"username": u2, "password": p2, "name": n, "role": "student"}])], ignore_index=True), USERS_DB)
+                    st.success("تم الإنشاء!")
         st.markdown('</div>', unsafe_allow_html=True)
 
-# ---------------------------------------------------------
-# 6. لوحة الطالب
-# ---------------------------------------------------------
-def student_dashboard():
+def main_app():
     with st.sidebar:
-        if lottie_student: st_lottie(lottie_student, height=150)
-        st.title(f"👤 مرحباً، {st.session_state.role}")
+        st.markdown(f"""
+        <div style="text-align:center; margin-bottom: 20px;">
+            <div style="width: 80px; height: 80px; border-radius: 50%; background: {theme['primary']}; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 30px; color: white;">
+                {st.session_state.user['name'][0].upper()}
+            </div>
+            <h3 style="margin-top: 10px; color: {theme['primary']} !important;">{st.session_state.user['name']}</h3>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # --- القائمة الشفافة ---
+        menu = option_menu("القائمة", ["الرئيسية", "إضافة مادة", "الخطة"], 
+            icons=['house', 'plus-circle', 'table'], menu_icon="cast", default_index=0,
+            styles={
+                "container": {"padding": "0!important", "background-color": "transparent"}, 
+                "icon": {"color": theme['primary'], "font-size": "18px"}, 
+                "nav-link": {"font-size": "16px", "text-align": "right", "color": theme['menu_text'], "margin":"5px"},
+                "nav-link-selected": {"background-color": theme['primary'], "color": "#fff"},
+            })
         
-        if st.button("تسجيل خروج 🚪"):
-            st.session_state.logged_in = False
-            st.rerun()
+        st.markdown("---")
+        c1, c2 = st.columns(2)
+        if c1.button("🌑"): st.session_state.theme = 'titanium'; st.rerun()
+        if c2.button("🌸"): st.session_state.theme = 'sakura'; st.rerun()
+        if st.button("خروج", key="logout"): st.session_state.logged_in = False; st.rerun()
 
-    col_t, col_i = st.columns([3, 1])
-    with col_t:
-        st.title("🚀 نظام SmartBacklog")
-        st.write("حول التراكمات إلى خطة عمل ذكية")
-    with col_i:
-        if lottie_rocket: st_lottie(lottie_rocket, height=100)
-
-    tab1, tab2, tab3 = st.tabs(["📊 إضافة ومتابعة", "📋 الجدول الذكي", "💡 المساعد"])
-
-    with tab1:
-        with st.expander("➕ إضافة مادة جديدة", expanded=True):
-            with st.form("add_task"):
-                c1, c2, c3 = st.columns(3)
-                with c1: subj = st.text_input("اسم المادة")
-                with c2: lessons = st.number_input("الدروس", 1, 50, 5)
-                with c3: diff = st.slider("الصعوبة", 1, 10, 5)
-                days = st.number_input("أيام حتى الامتحان", 1, 365, 7)
-                
-                if st.form_submit_button("إضافة 💾"):
-                    if subj:
-                        df = load_data()
-                        prio = (diff * lessons) / days
-                        new_row = {"المادة": subj, "الدروس": lessons, "الصعوبة": diff, "الأيام": days, "الأولوية": round(prio, 2), "الطالب": "عبد الخالق"}
-                        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-                        save_data(df)
-                        st.success("تم الحفظ!")
-                        if lottie_done: st_lottie(lottie_done, height=100, key="success")
-                        st.rerun()
-                    else:
-                        st.warning("اكتب اسم المادة!")
-
-        df = load_data()
-        if not df.empty:
-            st.divider()
-            k1, k2, k3 = st.columns(3)
-            k1.metric("عدد المواد", len(df))
-            k2.metric("إجمالي الدروس", df['الدروس'].sum())
-            k3.metric("الأكثر إلحاحاً", df.loc[df['الأولوية'].idxmax()]['المادة'])
-            
-            g1, g2 = st.columns(2)
-            with g1:
-                st.plotly_chart(px.pie(df, values='الدروس', names='المادة', hole=0.4, title="توزيع الجهد"), use_container_width=True)
-            with g2:
-                st.plotly_chart(px.bar(df, x='المادة', y='الأولوية', color='الأولوية', title="مؤشر الخطر"), use_container_width=True)
-
-    with tab2:
-        df = load_data()
-        if not df.empty:
-            st.subheader("جدول الأولويات (ابدأ بالأعلى)")
-            st.dataframe(df.sort_values(by="الأولوية", ascending=False).style.background_gradient(cmap="Blues", subset=["الأولوية"]), use_container_width=True)
-        else:
-            st.info("لا توجد بيانات.. ابدأ بالإضافة!")
-
-    with tab3:
-        st.info("🤖 نصيحة الذكاء الاصطناعي: قسم الدروس الكبيرة إلى أجزاء صغيرة لتشعر بالإنجاز.")
-
-# ---------------------------------------------------------
-# 7. لوحة المدير
-# ---------------------------------------------------------
-def admin_dashboard():
-    st.sidebar.error("وضع المسؤول (Admin)")
-    if st.sidebar.button("تسجيل خروج"):
-        st.session_state.logged_in = False
-        st.rerun()
-        
-    st.title("🛠️ لوحة تحكم النظام")
-    df = load_data()
-    st.metric("إجمالي السجلات", len(df))
+    tasks = load_data(TASKS_DB)
+    for c in ['الدروس', 'المحاضرات', 'الأولوية', 'الصعوبة', 'الأيام']: 
+        tasks[c] = pd.to_numeric(tasks[c], errors='coerce').fillna(0)
     
-    col_a, col_b = st.columns(2)
-    with col_a:
-        if st.button("⚡ توليد بيانات تلقائية"):
-            generate_dummy_data()
-            st.success("تم التوليد!")
-            st.rerun()
-    with col_b:
-        if st.button("🗑️ حذف الكل"):
-            save_data(pd.DataFrame(columns=["المادة", "الدروس", "الصعوبة", "الأيام", "الأولوية", "الطالب"]))
-            st.warning("تم الحذف!")
-            st.rerun()
+    my_tasks = tasks if st.session_state.user['role'] == 'admin' else tasks[tasks['الطالب'] == st.session_state.user['username']]
+
+    if menu == "الرئيسية":
+        st.markdown(f"<h2>أهلاً بك 👋</h2>", unsafe_allow_html=True)
+        st.caption(random.choice(quotes))
+        
+        if not my_tasks.empty:
+            c1, c2, c3 = st.columns(3)
+            total = int(my_tasks['الدروس'].sum() + my_tasks['المحاضرات'].sum())
+            with c1: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>المواد</h3><h1>{len(my_tasks)}</h1></div>', unsafe_allow_html=True)
+            with c2: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>التراكمات</h3><h1>{total}</h1></div>', unsafe_allow_html=True)
+            top = my_tasks.sort_values("الأولوية").iloc[-1]["المادة"] if len(my_tasks)>0 else "-"
+            with c3: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>ابدأ بـ</h3><h1>{top}</h1></div>', unsafe_allow_html=True)
             
-    st.dataframe(df, use_container_width=True)
+            g1, g2 = st.columns([1.5, 1])
+            with g1:
+                fig = px.bar(my_tasks, x='المادة', y='الأولوية', color='الأولوية', template=theme['chart_theme'], color_continuous_scale='Bluyl')
+                fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_family="Almarai", margin=dict(l=0,r=0,t=0,b=0))
+                st.plotly_chart(fig, use_container_width=True)
+            with g2:
+                my_tasks['الكل'] = my_tasks['الدروس'] + my_tasks['المحاضرات']
+                fig2 = px.pie(my_tasks, values='الكل', names='المادة', hole=0.6, template=theme['chart_theme'])
+                fig2.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_family="Almarai", margin=dict(l=0,r=0,t=0,b=0), showlegend=False)
+                st.plotly_chart(fig2, use_container_width=True)
+        else: st.info("القائمة فارغة.")
 
-# ---------------------------------------------------------
-# 8. التشغيل
-# ---------------------------------------------------------
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-    st.session_state.role = None
+    elif menu == "إضافة مادة":
+        col_f, col_a = st.columns([2, 1])
+        with col_a:
+            if lottie_w := load_lottie(theme['lottie_wait']): st_lottie(lottie_w, height=200)
+        
+        with col_f:
+            st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+            with st.form("add_task_form"):
+                c1, c2 = st.columns(2)
+                sub = c1.text_input("اسم المادة")
+                days = c2.number_input("أيام للامتحان", 1, 365, 7)
+                c3, c4 = st.columns(2)
+                les = c3.number_input("دروس", 0, 100, 0)
+                lec = c4.number_input("محاضرات", 0, 100, 0)
+                diff = st.slider("الصعوبة", 1, 10, 5)
+                
+                if st.form_submit_button("حفظ"):
+                    if sub and (les > 0 or lec > 0):
+                        prio = (diff * (les + lec)) / days
+                        save_data(pd.concat([tasks, pd.DataFrame([{
+                            "المادة": sub, "الدروس": les, "المحاضرات": lec, "الصعوبة": diff,
+                            "الأيام": days, "الأولوية": round(prio, 2), "الطالب": st.session_state.user['username']
+                        }])], ignore_index=True), TASKS_DB)
+                        play_sound()
+                        st.balloons()
+                        st.success("تم!")
+                        time.sleep(1)
+                        st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
-if not st.session_state.logged_in:
-    login_page()
-else:
-    if st.session_state.role == "admin":
-        admin_dashboard()
-    else:
-        student_dashboard()
+    elif menu == "الخطة":
+        if not my_tasks.empty:
+            st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+            st.data_editor(
+                my_tasks.sort_values(by="الأولوية", ascending=False),
+                column_config={
+                    "الأولوية": st.column_config.ProgressColumn("الأهمية", format="%.2f", min_value=0, max_value=max(my_tasks['الأولوية'].max(), 10)),
+                    "الصعوبة": st.column_config.NumberColumn("الصعوبة", format="%d ⭐"),
+                    "الأيام": st.column_config.NumberColumn("الوقت", format="%d يوم ⏳"),
+                },
+                hide_index=True, use_container_width=True, disabled=["الأولوية", "الطالب"]
+            )
+            st.markdown('</div>', unsafe_allow_html=True)
+            csv = my_tasks.to_csv(index=False).encode('utf-8-sig')
+            st.download_button("📥 تحميل الجدول", csv, "Plan.csv", "text/csv", use_container_width=True)
+        else: st.info("فارغ.")
+
+if st.session_state.logged_in: main_app()
+else: login_page()
