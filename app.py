@@ -89,13 +89,32 @@ h1, h2, h3, .stMetricLabel {{ font-family: 'El Messiri', sans-serif !important; 
 
 {bg_css}
 
-/* --- هنا كود الإخفاء الجديد (Clean Mode) --- */
-/* إخفاء القائمة العلوية (3 شرط) والشريط العلوي */
-#MainMenu {{visibility: hidden;}}
-header {{visibility: hidden;}}
-footer {{visibility: hidden;}}
-[data-testid="stToolbar"] {{visibility: hidden; top: -50px;}} /* إخفاء شريط Share و GitHub */
-/* ------------------------------------------ */
+/* ============================================================ */
+/* 🚫🚫🚫 كود الإخفاء الشامل (Ghost Mode) 🚫🚫🚫 */
+/* ============================================================ */
+
+/* إخفاء القائمة العلوية */
+#MainMenu {{visibility: hidden !important; display: none !important;}}
+
+/* إخفاء الهيدر العلوي بالكامل (بما فيه الزرار الأحمر) */
+header {{visibility: hidden !important; display: none !important;}}
+.stApp > header {{visibility: hidden !important; display: none !important;}}
+
+/* إخفاء الفوتر السفلي */
+footer {{visibility: hidden !important; display: none !important;}}
+.stFooter {{visibility: hidden !important; display: none !important;}}
+
+/* إخفاء شريط الأدوات الخاص بالمطورين */
+[data-testid="stToolbar"] {{visibility: hidden !important; display: none !important;}}
+
+/* إخفاء أي عناصر تزيين إضافية من ستريم ليت */
+[data-testid="stDecoration"] {{visibility: hidden !important; display: none !important;}}
+[data-testid="stStatusWidget"] {{visibility: hidden !important; display: none !important;}}
+
+/* رفع المحتوى للأعلى ليغطي مكان الشريط المختفي */
+.block-container {{ padding-top: 0rem !important; padding-bottom: 0rem !important; }}
+
+/* ============================================================ */
 
 section[data-testid="stSidebar"] {{
     background-color: {theme['sidebar_bg']} !important;
@@ -134,7 +153,6 @@ div.stButton > button:hover {{ transform: scale(1.02); }}
 h1, h2, h3 {{ color: {theme['primary']} !important; }}
 p, span, label, div {{ color: {theme['text']}; }}
 
-.block-container {{ padding-top: 0rem; }} /* تقليل المسافة العلوية لأننا أخفينا الشريط */
 </style>
 """, unsafe_allow_html=True)
 
