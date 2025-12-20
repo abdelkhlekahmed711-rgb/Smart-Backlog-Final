@@ -81,6 +81,7 @@ else:
     }
     """
 
+# --- الكود المخصص للإخفاء القسري ---
 st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=El+Messiri:wght@400;500;600;700&display=swap');
@@ -89,32 +90,52 @@ h1, h2, h3, .stMetricLabel {{ font-family: 'El Messiri', sans-serif !important; 
 
 {bg_css}
 
-/* ============================================================ */
-/* 🚫🚫🚫 كود الإخفاء الشامل (Ghost Mode) 🚫🚫🚫 */
-/* ============================================================ */
+/* ========================================= */
+/* ⛔⛔⛔ منطقة الحظر الشامل ⛔⛔⛔ */
+/* ========================================= */
 
-/* إخفاء القائمة العلوية */
-#MainMenu {{visibility: hidden !important; display: none !important;}}
+/* إخفاء الهيدر الأساسي بالكامل */
+header[data-testid="stHeader"] {{
+    display: none !important;
+    visibility: hidden !important;
+}}
 
-/* إخفاء الهيدر العلوي بالكامل (بما فيه الزرار الأحمر) */
-header {{visibility: hidden !important; display: none !important;}}
-.stApp > header {{visibility: hidden !important; display: none !important;}}
+/* إخفاء شريط الأدوات (الثلاث شرط + القائمة) */
+[data-testid="stToolbar"] {{
+    display: none !important;
+    visibility: hidden !important;
+}}
 
 /* إخفاء الفوتر السفلي */
-footer {{visibility: hidden !important; display: none !important;}}
-.stFooter {{visibility: hidden !important; display: none !important;}}
+footer {{
+    display: none !important;
+    visibility: hidden !important;
+}}
 
-/* إخفاء شريط الأدوات الخاص بالمطورين */
-[data-testid="stToolbar"] {{visibility: hidden !important; display: none !important;}}
+/* إخفاء زرار "Deploy" للمطورين */
+.stDeployButton {{
+    display: none !important;
+    visibility: hidden !important;
+}}
 
-/* إخفاء أي عناصر تزيين إضافية من ستريم ليت */
-[data-testid="stDecoration"] {{visibility: hidden !important; display: none !important;}}
-[data-testid="stStatusWidget"] {{visibility: hidden !important; display: none !important;}}
+/* إخفاء الشريط الملون العلوي (Decoration) */
+[data-testid="stDecoration"] {{
+    display: none !important;
+    visibility: hidden !important;
+}}
 
-/* رفع المحتوى للأعلى ليغطي مكان الشريط المختفي */
-.block-container {{ padding-top: 0rem !important; padding-bottom: 0rem !important; }}
+/* إخفاء أيقونات الحالة */
+[data-testid="stStatusWidget"] {{
+    display: none !important;
+    visibility: hidden !important;
+}}
 
-/* ============================================================ */
+/* رفع الصفحة لأعلى لتغطية الفراغ */
+.block-container {{
+    padding-top: 0rem !important;
+}}
+
+/* ========================================= */
 
 section[data-testid="stSidebar"] {{
     background-color: {theme['sidebar_bg']} !important;
