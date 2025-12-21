@@ -6,13 +6,13 @@ import requests
 import time
 import random
 import math
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta
 import streamlit.components.v1 as components
 from streamlit_lottie import st_lottie
 from streamlit_option_menu import option_menu
 
 # ---------------------------------------------------------
-# 1. إعدادات الصفحة
+# 1. إعدادات الصفحة (يجب أن تكون الأولى دائماً)
 # ---------------------------------------------------------
 st.set_page_config(page_title="SmartBacklog Pro", page_icon="🎓", layout="wide")
 
@@ -22,7 +22,7 @@ if 'messages' not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": "أهلاً يا بطل! أنا المستشار الأكاديمي. حاسس بإيه النهاردة؟ (مخنوق، متراكم عليا، عاوز خطة...)"}]
 
 # ---------------------------------------------------------
-# 2. الألوان والستايل
+# 2. القوة الجبرية للتصميم (CSS Fixed)
 # ---------------------------------------------------------
 colors = {
     'bg_dark': '#0f172a',
@@ -36,6 +36,7 @@ st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=El+Messiri:wght@400;500;600;700&display=swap');
 
+/* 1. الخلفية المتحركة (إجبارية) */
 @keyframes gradientBG {{
     0% {{ background-position: 0% 50%; }}
     50% {{ background-position: 100% 50%; }}
@@ -43,43 +44,59 @@ st.markdown(f"""
 }}
 
 .stApp {{
-    background: linear-gradient(-45deg, #020617, #0f172a, #1e293b, #020617);
+    background: linear-gradient(-45deg, #020617, #0f172a, #1e293b, #000000);
     background-size: 400% 400%;
     animation: gradientBG 15s ease infinite;
 }}
 
+/* 2. النصوص والخطوط */
 * {{ font-family: 'Almarai', sans-serif; }}
-h1, h2, h3, .stMetricLabel {{ font-family: 'El Messiri', sans-serif !important; }}
-
-p, span, label, div, h1, h2, h3, h4, h5, h6, .stMarkdown {{ color: {colors['text']} !important; }}
-
-input, textarea, select {{
-    background-color: {colors['input_bg']} !important;
+h1, h2, h3, h4, h5, h6, .stMetricLabel {{ 
+    font-family: 'El Messiri', sans-serif !important; 
     color: white !important;
-    -webkit-text-fill-color: white !important;
-    caret-color: {colors['primary']} !important;
-    border: 1px solid {colors['border']} !important;
+}}
+p, span, label, div, .stMarkdown {{ color: #e2e8f0 !important; }}
+
+/* 3. القائمة الجانبية (Sidebar) */
+section[data-testid="stSidebar"] {{
+    background-color: rgba(15, 23, 42, 0.95) !important;
+    border-right: 1px solid {colors['border']};
 }}
 
+/* 4. حقول الإدخال (Inputs) - إصلاح اللون الأبيض */
+input, textarea, select, .stTextInput > div > div > input, .stSelectbox > div > div > div {{
+    background-color: {colors['input_bg']} !important;
+    color: white !important;
+    border: 1px solid {colors['border']} !important;
+}}
+/* لون النص داخل الحقول */
+.stTextInput input {{ color: white !important; }}
+
+/* 5. الجداول */
 [data-testid="stDataEditor"] {{
     border: 1px solid {colors['border']};
     border-radius: 10px;
-    background-color: rgba(15, 23, 42, 0.6) !important;
+    background-color: rgba(15, 23, 42, 0.8) !important;
+}}
+[data-testid="stDataEditor"] div {{
+    background-color: transparent !important;
+    color: white !important;
 }}
 
-section[data-testid="stSidebar"] {{
-    background-color: rgba(15, 23, 42, 0.9) !important;
-    border-right: 1px solid {colors['border']};
-    backdrop-filter: blur(10px);
+/* 6. رسائل الشات (Chat Style) */
+.stChatMessage {{ 
+    background-color: rgba(30, 41, 59, 0.6) !important; 
+    border: 1px solid rgba(255,255,255,0.1); 
+    border-radius: 15px;
+}}
+/* حقل كتابة الشات */
+.stChatInput textarea {{
+    background-color: {colors['input_bg']} !important;
+    color: white !important;
+    border: 1px solid {colors['primary']} !important;
 }}
 
-header[data-testid="stHeader"] {{ background: transparent !important; }}
-.stDeployButton, [data-testid="stDecoration"], footer {{ display: none !important; }}
-
-/* تصميم شات المستشار */
-.stChatMessage {{ background-color: rgba(30, 41, 59, 0.5); border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }}
-
-/* البطاقات */
+/* 7. البطاقات الزجاجية */
 .glass-card {{
     background: rgba(30, 41, 59, 0.7);
     backdrop-filter: blur(12px);
@@ -89,6 +106,11 @@ header[data-testid="stHeader"] {{ background: transparent !important; }}
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }}
 
+/* 8. إخفاء العناصر المزعجة */
+header[data-testid="stHeader"] {{ background: transparent !important; }}
+.stDeployButton, [data-testid="stDecoration"], footer {{ display: none !important; }}
+
+/* 9. الأزرار */
 div.stButton > button {{
     background: linear-gradient(90deg, #0ea5e9, #2563eb);
     color: white !important; border: none;
@@ -99,28 +121,26 @@ div.stButton > button {{
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 3. الدوال المساعدة (شريط التقدم المخصص)
+# 3. الدوال المساعدة (شريط التقدم الملون)
 # ---------------------------------------------------------
 def render_custom_progress_bar(percentage):
-    # تحديد اللون بناءً على النسبة
     if percentage < 30:
-        bar_color = "#ef4444" # أحمر (خطر)
+        bar_color = "#ef4444" # أحمر
         bg_color = "rgba(239, 68, 68, 0.2)"
-        emoji = "😟"
+        emoji = "😟 شد حيلك"
     elif percentage < 70:
-        bar_color = "#eab308" # أصفر/برتقالي (جيد)
+        bar_color = "#eab308" # أصفر
         bg_color = "rgba(234, 179, 8, 0.2)"
-        emoji = "😐"
+        emoji = "😐 عاش يا بطل"
     else:
-        bar_color = "#22c55e" # أخضر (ممتاز)
+        bar_color = "#22c55e" # أخضر
         bg_color = "rgba(34, 197, 94, 0.2)"
-        emoji = "🤩"
+        emoji = "🤩 أسطورة!"
     
-    # HTML مخصص للشريط
     st.markdown(f"""
     <div style="margin-bottom: 20px;">
         <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-            <span style="font-weight:bold; color:white;">نسبة الإنجاز {emoji}</span>
+            <span style="font-weight:bold; color:white;">مستوى الدوبامين والإنجاز {emoji}</span>
             <span style="font-weight:bold; color:{bar_color};">{percentage:.1f}%</span>
         </div>
         <div style="width: 100%; background-color: {bg_color}; border-radius: 10px; height: 15px;">
@@ -168,7 +188,7 @@ def load_lottie(url):
     except: return None
 
 # ---------------------------------------------------------
-# 5. منطق الموزع الذكي + محاكي الذكاء الاصطناعي
+# 5. المنطق (AI + Logic)
 # ---------------------------------------------------------
 def distribute_backlog(df, subject, amount, deadline, username):
     start_date = date.today()
@@ -192,7 +212,6 @@ def distribute_backlog(df, subject, amount, deadline, username):
         return pd.concat([df, pd.DataFrame(new_rows)], ignore_index=True), True, f"تم إضافة {current_unit-1} مهمة!"
     return df, False, "لم يتم إضافة مهام."
 
-# دالة الرد الذكي (Simulated AI)
 def get_bot_response(user_input):
     user_input = user_input.lower()
     responses = {
@@ -200,18 +219,14 @@ def get_bot_response(user_input):
         "زهقان": "الزهق بيجي لما المهام تكون رتيبة. جرب تغير المكان اللي بتذاكر فيه، أو ذاكر المادة الصعبة بطريقة جديدة (فيديو بدل كتاب). اكسر الروتين!",
         "متراكم": "ولا يهمك، التراكم مجرد أرقام. روح لـ 'غرفة الإنقاذ' في البرنامج ده، وحط المادة اللي مخوفاك، وأنا هقطعهالك حتت صغيرة تخلصها من غير ما تحس.",
         "خايف": "الخوف طبيعي، بس متخلهوش يسيطر عليك. الخوف علاجه (الفعل). ابدأ بحاجة تافهة جداً دلوقتي، وهتلاقي الخوف اختفى.",
-        "فيزياء": "البعبع الجميل! الفيزياء مش حفظ، الفيزياء تخيل. حاول ترسم المسألة قبل ما تحلها. ابدأ بالسهل عشان تاخد ثقة.",
-        "نظام": "أحسن نظام هو اللي يناسبك أنت. جرب (بومودورو): 25 دقيقة شغل و 5 دقايق راحة. البرنامج هنا متصمم يساعدك في ده.",
         "شكرا": "العفو يا بطل! أنا موجود هنا عشانك. كمل دوس!",
     }
-    # البحث عن كلمات مفتاحية
     for key, response in responses.items():
-        if key in user_input:
-            return response
-    return "سؤال جميل! أهم حاجة دلوقتي إنك تركز على (الاستمرارية) مش الكمال. ابدأ باللي تقدر عليه، والبرنامج هينظملك الباقي. تحب أساعدك في مادة معينة؟"
+        if key in user_input: return response
+    return "سؤال جميل! أهم حاجة دلوقتي إنك تركز على (الاستمرارية) مش الكمال. ابدأ باللي تقدر عليه، والبرنامج هينظملك الباقي."
 
 # ---------------------------------------------------------
-# 6. الواجهة (UI)
+# 6. التطبيق الرئيسي
 # ---------------------------------------------------------
 def login_page():
     c1, c2, c3 = st.columns([1, 1.8, 1])
@@ -255,7 +270,12 @@ def main_app():
         """, unsafe_allow_html=True)
         menu = option_menu("القائمة", ["لوحة التحكم", "غرفة الإنقاذ", "الجدول التفاعلي", "المستشار الذكي"], 
             icons=['speedometer', 'life-preserver', 'table', 'robot'], menu_icon="cast", default_index=0,
-            styles={"container": {"padding": "5px", "background-color": "transparent"}, "icon": {"color": "#38bdf8"}, "nav-link": {"color": "white", "text-align": "right"}, "nav-link-selected": {"background-color": "#38bdf8"}})
+            styles={
+                "container": {"padding": "5px", "background-color": "transparent"}, 
+                "icon": {"color": "#38bdf8"}, 
+                "nav-link": {"color": "white", "text-align": "right"}, 
+                "nav-link-selected": {"background-color": "#38bdf8"}
+            })
         st.markdown("---")
         if st.button("تسجيل خروج", key="logout"):
             st.session_state.logged_in = False
@@ -264,133 +284,99 @@ def main_app():
     tasks = load_data(TASKS_DB)
     my_tasks = tasks if st.session_state.user['role'] == 'admin' else tasks[tasks['الطالب'] == st.session_state.user['username']]
 
-    # --- 1. Dashboard (مع شريط الدوبامين) ---
+    # --- Dashboard ---
     if menu == "لوحة التحكم":
         st.markdown(f"<h2>مرحباً بك 👋</h2>", unsafe_allow_html=True)
         if not my_tasks.empty:
             pending = my_tasks[my_tasks['إنجاز'] == False]
             completed = my_tasks[my_tasks['إنجاز'] == True]
             
-            # حساب النسبة
             total_count = len(my_tasks)
             completed_count = len(completed)
             progress_pct = (completed_count / total_count * 100) if total_count > 0 else 0
             
-            # --- 🔥 شريط الدوبامين الجديد هنا 🔥 ---
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
             render_custom_progress_bar(progress_pct)
-            st.caption(f"لقد أنجزت {completed_count} من أصل {total_count} مهمة. استمر!")
             st.markdown('</div>', unsafe_allow_html=True)
             
-            # باقي البطاقات
             c1, c2, c3 = st.columns(3)
             with c1: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>المتبقي</h3><h1>{len(pending)}</h1></div>', unsafe_allow_html=True)
             with c2: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>وحدات المذاكرة</h3><h1>{pending["الدروس"].sum() + pending["المحاضرات"].sum():.0f}</h1></div>', unsafe_allow_html=True)
             with c3: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>تم إنجازه ✅</h3><h1>{len(completed)}</h1></div>', unsafe_allow_html=True)
             
-            # الرسوم البيانية
             g1, g2 = st.columns([1.5, 1])
             with g1:
                 pending['الكل'] = pending['الدروس'] + pending['المحاضرات']
                 if not pending.empty:
-                    fig = px.bar(pending.head(10), x='المادة', y='الأولوية', color='الأولوية', template='plotly_dark', title="أهم المهام حالياً")
+                    fig = px.bar(pending.head(10), x='المادة', y='الأولوية', color='الأولوية', template='plotly_dark')
                     fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_family="Almarai", font_color='white')
                     st.plotly_chart(fig, use_container_width=True)
             with g2:
                 if not pending.empty:
-                    fig2 = px.pie(pending, values='الكل', names='المادة', hole=0.6, template='plotly_dark', title="توزيع الحمل")
+                    fig2 = px.pie(pending, values='الكل', names='المادة', hole=0.6, template='plotly_dark')
                     fig2.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_family="Almarai", font_color='white', showlegend=False)
                     st.plotly_chart(fig2, use_container_width=True)
         else: st.info("لا توجد بيانات.")
 
-    # --- 2. Rescue Room ---
+    # --- Rescue ---
     elif menu == "غرفة الإنقاذ":
         st.markdown(f"<h2>🚑 غرفة الإنقاذ</h2>", unsafe_allow_html=True)
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.write("حول التراكمات لخطوات صغيرة فوراً.")
         with st.form("rescue_form"):
-            col1, col2 = st.columns(2)
-            with col1:
-                subj = st.text_input("اسم المادة", placeholder="مثال: فيزياء")
-                amt = st.number_input("العدد", min_value=1, value=5)
-            with col2:
-                d_date = st.date_input("موعد الانتهاء", min_value=date.today() + timedelta(days=1))
-                st.write("")
+            c1, c2 = st.columns(2)
+            with c1: subj = st.text_input("اسم المادة")
+            with c2: amt = st.number_input("العدد", min_value=1)
+            d_date = st.date_input("موعد الانتهاء", min_value=date.today() + timedelta(days=1))
             if st.form_submit_button("🚀 فتت التراكمات"):
                 if subj:
-                    updated_tasks, success, msg = distribute_backlog(tasks, subj, amt, d_date, st.session_state.user['username'])
+                    updated, success, msg = distribute_backlog(tasks, subj, amt, d_date, st.session_state.user['username'])
                     if success:
-                        save_data(updated_tasks, TASKS_DB)
+                        save_data(updated, TASKS_DB)
                         st.balloons()
                         st.success(msg)
                         time.sleep(1)
                         st.rerun()
                     else: st.error(msg)
-                else: st.warning("أدخل اسم المادة!")
+                else: st.warning("أدخل المادة")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- 3. Interactive Table ---
+    # --- Table ---
     elif menu == "الجدول التفاعلي":
         st.markdown(f"<h2>🗓️ جدول المهام</h2>", unsafe_allow_html=True)
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         if not my_tasks.empty:
-            my_tasks = my_tasks.sort_values(by=["إنجاز", "تاريخ_التنفيذ", "الأولوية"], ascending=[True, True, False])
-            edited_df = st.data_editor(
-                my_tasks,
-                column_config={
-                    "إنجاز": st.column_config.CheckboxColumn("تم؟", default=False),
-                    "المادة": st.column_config.TextColumn("المهمة", width="large"),
-                    "تاريخ_التنفيذ": st.column_config.DateColumn("التاريخ", format="YYYY-MM-DD"),
-                    "الأولوية": st.column_config.ProgressColumn("الأهمية", format="%.0f", min_value=0, max_value=100),
-                },
-                disabled=["الطالب"], hide_index=True, use_container_width=True, num_rows="dynamic"
-            )
+            my_tasks = my_tasks.sort_values(by=["إنجاز", "تاريخ_التنفيذ"], ascending=[True, True])
+            edited = st.data_editor(my_tasks, 
+                column_config={"إنجاز": st.column_config.CheckboxColumn("تم؟"), "الأولوية": st.column_config.ProgressColumn("الأهمية", max_value=100)},
+                disabled=["الطالب"], hide_index=True, use_container_width=True, num_rows="dynamic")
             if st.button("💾 حفظ"):
-                if st.session_state.user['role'] == 'admin': save_data(edited_df, TASKS_DB)
+                if st.session_state.user['role'] == 'admin': save_data(edited, TASKS_DB)
                 else:
-                    final_df = load_data(TASKS_DB)
-                    final_df = final_df[final_df['الطالب'] != st.session_state.user['username']]
-                    final_df = pd.concat([final_df, edited_df], ignore_index=True)
-                    save_data(final_df, TASKS_DB)
+                    final = load_data(TASKS_DB)
+                    final = final[final['الطالب'] != st.session_state.user['username']]
+                    save_data(pd.concat([final, edited], ignore_index=True), TASKS_DB)
                 st.success("تم!")
                 time.sleep(0.5)
                 st.rerun()
-        else: st.info("الجدول فارغ.")
+        else: st.info("فارغ")
         st.markdown('</div>', unsafe_allow_html=True)
-    
-    # --- 4. Smart Advisor Chat (تحديث جذري) ---
+
+    # --- AI Chat ---
     elif menu == "المستشار الذكي":
-        st.markdown(f"<h2>🤖 المستشار النفسي والأكاديمي</h2>", unsafe_allow_html=True)
-        
-        # عرض الرسائل السابقة
+        st.markdown(f"<h2>🤖 المستشار الأكاديمي</h2>", unsafe_allow_html=True)
         for msg in st.session_state.messages:
-            with st.chat_message(msg["role"]):
-                st.markdown(msg["content"])
-
-        # استقبال رسالة جديدة
-        if prompt := st.chat_input("اكتب مشكلتك هنا (تعبان، زهقان، مادة صعبة...)..."):
-            # إضافة رسالة المستخدم
+            with st.chat_message(msg["role"]): st.markdown(msg["content"])
+        
+        if prompt := st.chat_input("اكتب هنا..."):
             st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
-
-            # رد المستشار
-            with st.chat_message("assistant"):
-                message_placeholder = st.empty()
-                full_response = ""
-                # محاكاة التفكير
-                with st.spinner('جاري التفكير في حل...'):
-                    time.sleep(1) # تأخير بسيط لواقعية المحادثة
-                    bot_reply = get_bot_response(prompt)
-                
-                # تأثير الكتابة (Typewriter effect)
-                for chunk in bot_reply.split():
-                    full_response += chunk + " "
-                    time.sleep(0.05)
-                    message_placeholder.markdown(full_response + "▌")
-                message_placeholder.markdown(full_response)
+            with st.chat_message("user"): st.markdown(prompt)
             
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
+            with st.chat_message("assistant"):
+                with st.spinner("..."):
+                    time.sleep(0.8)
+                    reply = get_bot_response(prompt)
+                    st.markdown(reply)
+            st.session_state.messages.append({"role": "assistant", "content": reply})
 
 if st.session_state.logged_in: main_app()
 else: login_page()
