@@ -202,6 +202,11 @@ def login_page():
     with c2:
         st.write("")
         st.markdown('<div class="glass-card" style="text-align:center;"><h1>SmartBacklog</h1><p>Pro Edition</p></div>', unsafe_allow_html=True)
+        
+        # --- ✅ إضافة رسالة بيانات الدخول ---
+        st.info("🔐 **بيانات الدخول الافتراضية:**\n\n**المستخدم:** `admin`\n**كلمة السر:** `123`")
+        # --------------------------------
+        
         if lottie := load_lottie("https://lottie.host/94875632-7605-473d-8065-594ea470b355/9Z53657123.json"):
             st_lottie(lottie, height=150, key="welcome")
             
@@ -241,7 +246,7 @@ def main_app():
     tasks = load_data(TASKS_DB)
     my_tasks = tasks if st.session_state.user['role'] == 'admin' else tasks[tasks['الطالب'] == st.session_state.user['username']]
 
-    # --- Dashboard (تمت إعادة الرسوم البيانية) ---
+    # --- Dashboard ---
     if selected == "لوحة التحكم":
         st.markdown("<h2>📊 لوحة الإنجاز</h2>", unsafe_allow_html=True)
         if not my_tasks.empty:
@@ -261,12 +266,10 @@ def main_app():
             
             st.write("---")
             
-            # --- منطقة الرسوم البيانية (Charts Area) ---
+            # الرسوم البيانية
             g1, g2 = st.columns(2)
-            
             pending = my_tasks[my_tasks['إنجاز'] == False]
             
-            # 1. Bar Chart (الأولويات)
             with g1:
                 if not pending.empty:
                     st.markdown("##### 🔥 المهام الأكثر إلحاحاً")
@@ -280,17 +283,13 @@ def main_app():
                     )
                     fig_bar.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'color':'white'})
                     st.plotly_chart(fig_bar, use_container_width=True)
-                else:
-                    st.info("لا توجد مهام معلقة!")
+                else: st.info("لا توجد مهام معلقة!")
 
-            # 2. Pie Chart (دائرة البيانات)
             with g2:
                 if not pending.empty:
                     st.markdown("##### 🍰 توزيع الحمل الدراسي")
-                    # تجميع البيانات للدائرة
                     pie_data = pending['المادة'].value_counts().reset_index()
                     pie_data.columns = ['المادة', 'العدد']
-                    
                     fig_pie = px.pie(
                         pie_data, 
                         values='العدد', 
@@ -301,8 +300,7 @@ def main_app():
                     )
                     fig_pie.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'color':'white'})
                     st.plotly_chart(fig_pie, use_container_width=True)
-                else:
-                    st.info("أضف مواد لرؤية التحليل.")
+                else: st.info("أضف مواد لرؤية التحليل.")
                     
         else: st.info("ابدأ بإضافة مهام من غرفة الإنقاذ!")
 
