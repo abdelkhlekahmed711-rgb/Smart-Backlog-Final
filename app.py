@@ -5,6 +5,7 @@ import os
 import requests
 import time
 import random
+import streamlit.components.v1 as components
 from streamlit_lottie import st_lottie
 from streamlit_option_menu import option_menu
 
@@ -18,188 +19,165 @@ if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'user' not in st.session_state: st.session_state.user = {}
 
 # ---------------------------------------------------------
-# 2. نظام التصميم
+# 2. نظام التصميم (الألوان المتطورة)
 # ---------------------------------------------------------
 design = {
     'titanium': {
-        'sidebar_bg': 'rgba(15, 23, 42, 0.9)',
-        'glass': 'rgba(15, 23, 42, 0.7)',
-        'border': 'rgba(255, 255, 255, 0.1)',
+        'sidebar_bg': 'rgba(10, 15, 30, 0.95)',
+        'glass': 'rgba(15, 23, 42, 0.85)',
+        'border': 'rgba(56, 189, 248, 0.4)',
+        'input_bg': 'rgba(30, 41, 59, 0.8)', # خلفية حقول الإدخال
         'primary': '#38bdf8',
-        'text': '#f1f5f9',
-        'menu_text': '#f1f5f9',
-        'btn_grad': 'linear-gradient(90deg, #0ea5e9, #2563eb)',
+        'text': '#f8fafc',
+        'text_sec': '#cbd5e1', 
+        'menu_text': '#ffffff',
+        'chart_font': '#ffffff',
+        'btn_grad': 'linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%)',
+        'shadow': '0 0 20px rgba(56, 189, 248, 0.2)',
         'lottie_welcome': "https://lottie.host/94875632-7605-473d-8065-594ea470b355/9Z53657123.json",
         'lottie_wait': "https://lottie.host/5a709b1f-d748-4b7d-949f-50a84e27771c/9qj8M4Zz2X.json",
-        'chart_theme': 'plotly_dark'
+        'chart_template': 'plotly_dark',
+        'ai_icon': '🤖'
     },
     'sakura': {
-        'sidebar_bg': 'rgba(255, 240, 245, 0.85)',
-        'glass': 'rgba(255, 255, 255, 0.65)',
-        'border': 'rgba(255, 182, 193, 0.8)',
-        'primary': '#db2777',
-        'text': '#4a4a4a', 
-        'menu_text': '#4a4a4a',
-        'btn_grad': 'linear-gradient(90deg, #ec4899, #d946ef)',
+        'sidebar_bg': 'rgba(255, 255, 255, 0.95)', 
+        'glass': 'rgba(255, 255, 255, 0.92)',      
+        'border': 'rgba(236, 72, 153, 0.5)',
+        'input_bg': 'rgba(255, 241, 242, 0.9)', # خلفية حقول الإدخال (فاتحة)
+        'primary': '#be185d',
+        'text': '#831843',
+        'text_sec': '#9d174d',
+        'menu_text': '#831843',
+        'chart_font': '#831843',
+        'btn_grad': 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
+        'shadow': '0 10px 30px rgba(236, 72, 153, 0.2)',
         'lottie_welcome': "https://lottie.host/c750516b-4566-4148-89c0-8260a927054f/1I3k9s6X6q.json",
         'lottie_wait': "https://lottie.host/d2d9c049-14a5-4303-9dcd-e06915354972/uOqD6lB0qW.json",
-        'chart_theme': 'plotly_white'
+        'chart_template': 'plotly_white',
+        'ai_icon': '🧠'
     }
 }
 
 theme = design[st.session_state.theme]
 
-# الخلفيات
+# الخلفيات المتحركة (تم تحديث وضع النهار)
 bg_css = ""
 if st.session_state.theme == 'titanium':
     bg_css = """
     .stApp {
-        background-color: #020617;
+        background-color: #020617 !important;
         background-image: 
+            radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.15) 0%, transparent 60%),
             radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
-            radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
-            radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px);
-        background-size: 550px 550px, 350px 350px, 250px 250px;
-        animation: stars 20s linear infinite;
+            radial-gradient(white, rgba(255,255,255,.1) 1px, transparent 30px) !important;
+        background-size: 100% 100%, 450px 450px, 250px 250px !important;
+        animation: starsMove 40s linear infinite;
     }
-    @keyframes stars {
-        0% { background-position: 0 0, 0 0, 0 0; }
-        100% { background-position: 550px 550px, 350px 350px, 250px 250px; }
+    @keyframes starsMove {
+        0% { background-position: center, 0 0, 0 0; }
+        100% { background-position: center, 450px 450px, 250px 250px; }
     }
     """
 else:
+    # خلفية النهار الجديدة: تموجات ضوئية متحركة
     bg_css = """
     .stApp {
-        background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #ffd1ff);
-        background-size: 400% 400%;
-        animation: gradientBG 15s ease infinite;
+        background: linear-gradient(-45deg, #fff1f2, #ffe4e6, #fce7f3, #fdf4ff) !important;
+        background-size: 400% 400% !important;
+        animation: softWaves 15s ease infinite;
     }
-    @keyframes gradientBG {
+    @keyframes softWaves {
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
     }
     """
 
-# --- الكود المخصص للإخفاء القسري ---
+# --- CSS Styling شامل التعديلات الجديدة ---
 st.markdown(f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=El+Messiri:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&family=El+Messiri:wght@500;600;700&display=swap');
 * {{ font-family: 'Almarai', sans-serif; }}
-h1, h2, h3, .stMetricLabel {{ font-family: 'El Messiri', sans-serif !important; }}
+h1, h2, h3, .stMetricLabel {{ 
+    font-family: 'El Messiri', sans-serif !important; 
+    letter-spacing: 0.5px;
+}}
 
 {bg_css}
 
-/* ========================================= */
-/* ⛔⛔⛔ منطقة الحظر الشامل (Ghost Mode) ⛔⛔⛔ */
-/* ========================================= */
+.stApp, p, span, label, div, .stMarkdown {{ color: {theme['text']} !important; }}
 
-/* 1. إخفاء الهيدر العلوي بالكامل */
-header[data-testid="stHeader"] {{
-    display: none !important;
-    visibility: hidden !important;
-    height: 0px !important;
+/* إعدادات الموبايل */
+header[data-testid="stHeader"] {{ background: transparent !important; visibility: visible !important; }}
+button[kind="header"] {{
+    background: transparent !important; color: {theme['primary']} !important;
+    border: 1px solid {theme['primary']} !important; border-radius: 8px !important;
+    visibility: visible !important;
 }}
+[data-testid="stToolbar"], footer, .stFooter, .stDeployButton {{ display: none !important; }}
+.block-container {{ padding-top: 2rem !important; }}
 
-/* 2. إخفاء شريط الأدوات (الثلاث شرط + القائمة + Share) */
-[data-testid="stToolbar"] {{
-    display: none !important;
-    visibility: hidden !important;
-}}
-
-/* 3. إخفاء الفوتر السفلي */
-footer {{
-    display: none !important;
-    visibility: hidden !important;
-}}
-.stFooter {{
-    display: none !important;
-    visibility: hidden !important;
-}}
-
-/* 4. إخفاء زرار "Manage app" وزرار "Deploy" */
-.stDeployButton {{
-    display: none !important;
-    visibility: hidden !important;
-}}
-[data-testid="stManageAppButton"] {{
-    display: none !important;
-}}
-
-/* 5. إخفاء الشريط الملون العلوي (Decoration) */
-[data-testid="stDecoration"] {{
-    display: none !important;
-    visibility: hidden !important;
-}}
-
-/* 6. إخفاء أيقونات الحالة (Running Man) */
-[data-testid="stStatusWidget"] {{
-    display: none !important;
-    visibility: hidden !important;
-}}
-
-/* 7. رفع الصفحة لأعلى لتغطية الفراغ الناتج عن إخفاء الهيدر */
-.block-container {{
-    padding-top: 0rem !important;
-    margin-top: -50px !important; /* سحب المحتوى للأعلى */
-}}
-
-/* ========================================= */
-
+/* القائمة الجانبية */
 section[data-testid="stSidebar"] {{
     background-color: {theme['sidebar_bg']} !important;
-    backdrop-filter: blur(20px); border-right: 1px solid {theme['border']};
-    padding-top: 2rem !important; /* مسافة بسيطة داخل القائمة */
+    backdrop-filter: blur(25px); border-right: 1px solid {theme['border']};
 }}
+section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span {{ color: {theme['menu_text']} !important; }}
+section[data-testid="stSidebar"] h3 {{ color: {theme['primary']} !important; }}
 
-section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] div {{
-    color: {theme['menu_text']} !important;
-}}
-section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3 {{
-    color: {theme['primary']} !important;
-}}
-
+/* البطاقات الزجاجية */
 .glass-card {{
-    background: {theme['glass']};
-    backdrop-filter: blur(16px);
-    border-radius: 24px; border: 1px solid {theme['border']};
-    padding: 30px; margin-bottom: 25px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s;
+    background: {theme['glass']}; backdrop-filter: blur(20px);
+    border-radius: 20px; border: 1px solid {theme['border']};
+    padding: 25px; margin-bottom: 20px; box-shadow: {theme['shadow']};
+    transform-style: preserve-3d; transform: perspective(1000px); color: {theme['text']};
 }}
-.glass-card:hover {{ transform: translateY(-5px); }}
 
+/* الأزرار */
 div.stButton > button {{
-    background: {theme['btn_grad']}; color: white; border: none; padding: 10px 24px;
-    border-radius: 12px; font-weight: bold; width: 100%; transition: 0.3s;
+    background: {theme['btn_grad']}; color: white !important; border: none; 
+    padding: 12px 24px; border-radius: 15px; font-weight: 700; width: 100%; 
+    transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }}
-div.stButton > button:hover {{ transform: scale(1.02); }}
+div.stButton > button:hover {{ transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.2); }}
 
+/* --- تحسين حقول الإدخال (للموبايل والديسك توب) --- */
 .stTextInput input, .stNumberInput input, .stPasswordInput input {{
-    background: rgba(255, 255, 255, 0.2) !important;
+    background: {theme['input_bg']} !important; /* لون خلفية مخصص */
     border: 1px solid {theme['border']} !important;
-    color: {theme['text']} !important; border-radius: 12px !important;
+    color: {theme['text']} !important; /* لون النص مخصص */
+    border-radius: 12px !important;
+    padding: 10px 15px !important;
+    font-weight: 500 !important;
 }}
+.stTextInput input:focus, .stNumberInput input:focus {{
+    border-color: {theme['primary']} !important;
+    box-shadow: 0 0 0 3px {theme['primary']}30 !important;
+}}
+/* لون النص الإرشادي (Placeholder) */
+::placeholder {{ color: {theme['text_sec']} !important; opacity: 0.7; }}
 
-h1, h2, h3 {{ color: {theme['primary']} !important; }}
-p, span, label, div {{ color: {theme['text']}; }}
+/* الجدول */
+div[data-testid="stDataEditor"] {{ border: 1px solid {theme['border']}; border-radius: 15px; overflow: hidden; }}
+div[data-testid="stDataEditor"] div {{ color: {theme['text']} !important; }}
+
+h1, h2, h3 {{ color: {theme['primary']} !important; text-shadow: 0 2px 10px rgba(0,0,0,0.05); }}
+.small-text {{ color: {theme['text_sec']} !important; font-size: 0.85rem; }}
 
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 3. إدارة البيانات (تحديث لتلبية شرط الـ 20 ملف)
+# 3. إدارة البيانات + (محرك الذكاء الاصطناعي الجديد 🧠)
 # ---------------------------------------------------------
 TASKS_DB = 'smart_tasks.csv'
 USERS_DB = 'smart_users.csv'
 
 def init_dbs():
-    # 1. إنشاء ملف المستخدمين
     if not os.path.exists(USERS_DB):
         pd.DataFrame([{"username": "admin", "password": "123", "name": "Admin", "role": "admin"}]).to_csv(USERS_DB, index=False)
-    
-    # 2. إنشاء ملف المهام مع بيانات افتراضية (25 مادة)
     if not os.path.exists(TASKS_DB):
+        # توليد 25 مادة تلقائياً
         data = {
             "المادة": ["اللغة العربية", "الفيزياء", "الكيمياء", "الأحياء", "الرياضيات", "اللغة الإنجليزية", "التاريخ", "الجغرافيا", "الفلسفة", "علم النفس", "الفيزياء (مراجعة)", "الكيمياء (عضوية)", "نحو وصرف", "تفاضل", "اللغة الفرنسية", "التربية الوطنية", "الإحصاء", "الجيولوجيا", "الأحياء (وراثة)", "قصة الإنجليزي", "ميكانيكا", "استاتيكا", "جبر", "هندسة فراغية", "بلاغة"],
             "الدروس": [2, 5, 3, 1, 4, 2, 0, 1, 2, 3, 6, 2, 1, 5, 0, 1, 0, 2, 3, 4, 2, 3, 1, 2, 5],
@@ -209,11 +187,9 @@ def init_dbs():
             "الأولوية": [],
             "الطالب": ["admin"] * 25 
         }
-        
         for i in range(25):
             prio = (data["الصعوبة"][i] * (data["الدروس"][i] + data["المحاضرات"][i])) / max(data["الأيام"][i], 1)
             data["الأولوية"].append(round(prio, 2))
-            
         df = pd.DataFrame(data)
         df.to_csv(TASKS_DB, index=False)
 
@@ -223,6 +199,35 @@ def load_data(file):
     return df
 def save_data(df, file): df.to_csv(file, index=False)
 init_dbs()
+
+# --- 🧠 محرك المستشار الذكي (Rule-Based AI) ---
+def get_ai_advice(df):
+    if df.empty: return "جدولك فارغ! ابدأ بإضافة بعض المواد لننطلق. 🚀"
+    
+    total_tasks = df['الدروس'].sum() + df['المحاضرات'].sum()
+    avg_difficulty = df['الصعوبة'].mean()
+    hardest_subject = df.sort_values('الأولوية', ascending=False).iloc[0]['المادة']
+    urgent_tasks = df[df['الأيام'] <= 5]
+    
+    advice = ""
+    if total_tasks > 30:
+        advice += f"⚠️ لديك تراكمات كثيرة ({int(total_tasks)} درس/محاضرة). أنصحك بتفعيل 'نظام الطوارئ' والتركيز على مادتين فقط يومياً."
+    elif total_tasks > 15:
+        advice += f"💡 التراكمات متوسطة. حافظ على استمرارية المذاكرة ساعتين يومياً على الأقل."
+    else:
+        advice += f"✅ وضعك ممتاز! أنت مسيطر على الأمور. استمر على هذا المنوال."
+
+    advice += "\n\n"
+    
+    if not urgent_tasks.empty:
+        advice += f"🔥 تنبيه: لديك {len(urgent_tasks)} مواد امتحاناتها قريبة جداً (أقل من 5 أيام). اترك كل شيء وابدأ بها فوراً."
+    elif avg_difficulty > 7:
+        advice += f"🏋️ يبدو أنك تركز على المواد الصعبة مؤخراً. لا تنسَ الترويح عن نفسك بمادة سهلة بين الحين والآخر."
+    else:
+        advice += f"🎯 نصيحة ذهبية: ابدأ يومك الدراسي بمادة '{hardest_subject}' لأنها ذات الأولوية القصوى حالياً، ثم كافئ نفسك بمادة أخف."
+        
+    return advice
+# ----------------------------------------------
 
 @st.cache_data
 def load_lottie(url):
@@ -243,24 +248,27 @@ def login_page():
     c1, c2, c3 = st.columns([1, 1.8, 1])
     with c2:
         st.write("")
-        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.markdown('<div class="glass-card" data-tilt>', unsafe_allow_html=True)
         
-        cl, cr = st.columns(2)
-        with cl: 
-            if st.button("🌑 Titanium", key="thm_b", use_container_width=True): st.session_state.theme = 'titanium'; st.rerun()
-        with cr: 
-            if st.button("🌸 Sakura", key="thm_g", use_container_width=True): st.session_state.theme = 'sakura'; st.rerun()
+        col_t, col_e = st.columns([1, 3])
+        with col_t:
+            icon = "🌒" if st.session_state.theme == 'sakura' else "🌸"
+            if st.button(icon, key="theme_toggle_login"):
+                st.session_state.theme = 'titanium' if st.session_state.theme == 'sakura' else 'sakura'
+                st.rerun()
+        
+        st.markdown(f"<div style='text-align:center; margin-top:10px;'><h1>SmartBacklog</h1><p class='small-text'>بوابتك الذكية للتفوق الدراسي</p></div>", unsafe_allow_html=True)
+        st.info("💡 **للجنة التحكيم:** المستخدم: `admin` | المرور: `123`")
 
-        st.markdown(f"<div style='text-align:center; margin-top:20px;'><h1>SmartBacklog</h1><p class='small-text'>بوابتك الذكية للتفوق الدراسي</p></div>", unsafe_allow_html=True)
-        
         if lottie := load_lottie(theme['lottie_welcome']):
             st_lottie(lottie, height=180, key="welcome")
 
         tab_log, tab_reg = st.tabs(["دخول", "حساب جديد"])
         
         with tab_log:
-            u = st.text_input("اسم المستخدم", key="u1")
-            p = st.text_input("كلمة المرور", type="password", key="p1")
+            # تم تحسين الحقول هنا تلقائياً عبر CSS
+            u = st.text_input("اسم المستخدم", key="u1", placeholder="أدخل اسم المستخدم")
+            p = st.text_input("كلمة المرور", type="password", key="p1", placeholder="أدخل كلمة المرور")
             if st.button("دخول النظام 🚀"):
                 users = load_data(USERS_DB)
                 found = users[(users['username'] == u) & (users['password'] == p)]
@@ -271,9 +279,9 @@ def login_page():
                 else: st.error("البيانات غير صحيحة")
         
         with tab_reg:
-            n = st.text_input("الاسم", key="n2")
-            u2 = st.text_input("يوزر جديد", key="u2")
-            p2 = st.text_input("كلمة مرور", type="password", key="p2")
+            n = st.text_input("الاسم", key="n2", placeholder="اسمك الثنائي")
+            u2 = st.text_input("يوزر جديد", key="u2", placeholder="اختر اسم مستخدم")
+            p2 = st.text_input("كلمة مرور", type="password", key="p2", placeholder="اختر كلمة مرور قوية")
             if st.button("انضم إلينا ✨"):
                 users = load_data(USERS_DB)
                 if u2 in users['username'].values: st.error("مستخدم")
@@ -284,29 +292,35 @@ def login_page():
 
 def main_app():
     with st.sidebar:
+        theme_btn_label = "تفعيل الوضع النهاري 🌸" if st.session_state.theme == 'titanium' else "تفعيل الوضع الليلي 🌒"
+        if st.button(theme_btn_label, use_container_width=True):
+            st.session_state.theme = 'sakura' if st.session_state.theme == 'titanium' else 'titanium'
+            st.rerun()
+        
+        st.markdown("---")
         st.markdown(f"""
         <div style="text-align:center; margin-bottom: 20px;">
-            <div style="width: 80px; height: 80px; border-radius: 50%; background: {theme['primary']}; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 30px; color: white;">
+            <div style="width: 80px; height: 80px; border-radius: 50%; background: {theme['primary']}; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; box-shadow: 0 0 15px {theme['primary']}50;">
                 {st.session_state.user['name'][0].upper()}
             </div>
-            <h3 style="margin-top: 10px; color: {theme['primary']} !important;">{st.session_state.user['name']}</h3>
+            <h3 style="margin-top: 15px; color: {theme['primary']} !important;">{st.session_state.user['name']}</h3>
         </div>
         """, unsafe_allow_html=True)
 
-        menu = option_menu("القائمة", ["الرئيسية", "إضافة مادة", "الخطة"], 
-            icons=['house', 'plus-circle', 'table'], menu_icon="cast", default_index=0,
+        # --- قائمة جديدة تحتوي على زر الـ AI ---
+        menu = option_menu("القائمة", ["الرئيسية", "إضافة مادة", "الخطة", "مستشار الذكاء"], 
+            icons=['house', 'plus-circle', 'table', 'robot'], menu_icon="cast", default_index=0,
             styles={
                 "container": {"padding": "0!important", "background-color": "transparent"}, 
                 "icon": {"color": theme['primary'], "font-size": "18px"}, 
                 "nav-link": {"font-size": "16px", "text-align": "right", "color": theme['menu_text'], "margin":"5px"},
-                "nav-link-selected": {"background-color": theme['primary'], "color": "#fff"},
+                "nav-link-selected": {"background-color": theme['primary'], "color": "#fff", "box-shadow": f"0 4px 10px {theme['primary']}40"},
             })
         
         st.markdown("---")
-        c1, c2 = st.columns(2)
-        if c1.button("🌑"): st.session_state.theme = 'titanium'; st.rerun()
-        if c2.button("🌸"): st.session_state.theme = 'sakura'; st.rerun()
-        if st.button("خروج", key="logout"): st.session_state.logged_in = False; st.rerun()
+        if st.button("تسجيل خروج", key="logout", use_container_width=True):
+            st.session_state.logged_in = False
+            st.rerun()
 
     tasks = load_data(TASKS_DB)
     for c in ['الدروس', 'المحاضرات', 'الأولوية', 'الصعوبة', 'الأيام']: 
@@ -321,20 +335,20 @@ def main_app():
         if not my_tasks.empty:
             c1, c2, c3 = st.columns(3)
             total = int(my_tasks['الدروس'].sum() + my_tasks['المحاضرات'].sum())
-            with c1: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>المواد</h3><h1>{len(my_tasks)}</h1></div>', unsafe_allow_html=True)
-            with c2: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>التراكمات</h3><h1>{total}</h1></div>', unsafe_allow_html=True)
+            with c1: st.markdown(f'<div class="glass-card" data-tilt style="text-align:center"><h3>المواد</h3><h1>{len(my_tasks)}</h1></div>', unsafe_allow_html=True)
+            with c2: st.markdown(f'<div class="glass-card" data-tilt style="text-align:center"><h3>التراكمات</h3><h1>{total}</h1></div>', unsafe_allow_html=True)
             top = my_tasks.sort_values("الأولوية").iloc[-1]["المادة"] if len(my_tasks)>0 else "-"
-            with c3: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>ابدأ بـ</h3><h1>{top}</h1></div>', unsafe_allow_html=True)
+            with c3: st.markdown(f'<div class="glass-card" data-tilt style="text-align:center"><h3>ابدأ بـ</h3><h1 style="color:{theme["primary"]}">{top}</h1></div>', unsafe_allow_html=True)
             
             g1, g2 = st.columns([1.5, 1])
             with g1:
-                fig = px.bar(my_tasks, x='المادة', y='الأولوية', color='الأولوية', template=theme['chart_theme'], color_continuous_scale='Bluyl')
-                fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_family="Almarai", margin=dict(l=0,r=0,t=0,b=0))
+                my_tasks['الكل'] = my_tasks['الدروس'] + my_tasks['المحاضرات']
+                fig = px.bar(my_tasks, x='المادة', y='الأولوية', color='الأولوية', template=theme['chart_template'], color_continuous_scale='Bluyl')
+                fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_family="Almarai", font_color=theme['chart_font'], margin=dict(l=0,r=0,t=0,b=0))
                 st.plotly_chart(fig, use_container_width=True)
             with g2:
-                my_tasks['الكل'] = my_tasks['الدروس'] + my_tasks['المحاضرات']
-                fig2 = px.pie(my_tasks, values='الكل', names='المادة', hole=0.6, template=theme['chart_theme'])
-                fig2.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_family="Almarai", margin=dict(l=0,r=0,t=0,b=0), showlegend=False)
+                fig2 = px.pie(my_tasks, values='الكل', names='المادة', hole=0.6, template=theme['chart_template'])
+                fig2.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_family="Almarai", font_color=theme['chart_font'], margin=dict(l=0,r=0,t=0,b=0), showlegend=False)
                 st.plotly_chart(fig2, use_container_width=True)
         else: st.info("القائمة فارغة.")
 
@@ -344,17 +358,18 @@ def main_app():
             if lottie_w := load_lottie(theme['lottie_wait']): st_lottie(lottie_w, height=200)
         
         with col_f:
-            st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+            st.markdown('<div class="glass-card" data-tilt>', unsafe_allow_html=True)
             with st.form("add_task_form"):
                 c1, c2 = st.columns(2)
-                sub = c1.text_input("اسم المادة")
+                # الحقول الجديدة المحسنة
+                sub = c1.text_input("اسم المادة", placeholder="مثال: فيزياء")
                 days = c2.number_input("أيام للامتحان", 1, 365, 7)
                 c3, c4 = st.columns(2)
-                les = c3.number_input("دروس", 0, 100, 0)
-                lec = c4.number_input("محاضرات", 0, 100, 0)
-                diff = st.slider("الصعوبة", 1, 10, 5)
+                les = c3.number_input("دروس متراكمة", 0, 100, 0)
+                lec = c4.number_input("محاضرات متراكمة", 0, 100, 0)
+                diff = st.slider("درجة الصعوبة (1=سهل, 10=صعب)", 1, 10, 5)
                 
-                if st.form_submit_button("حفظ"):
+                if st.form_submit_button("حفظ المادة"):
                     if sub and (les > 0 or lec > 0):
                         prio = (diff * (les + lec)) / days
                         save_data(pd.concat([tasks, pd.DataFrame([{
@@ -363,27 +378,60 @@ def main_app():
                         }])], ignore_index=True), TASKS_DB)
                         play_sound()
                         st.balloons()
-                        st.success("تم!")
+                        st.success("تمت الإضافة بنجاح! 🎉")
                         time.sleep(1)
                         st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
     elif menu == "الخطة":
         if not my_tasks.empty:
-            st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+            st.markdown('<div class="glass-card" data-tilt>', unsafe_allow_html=True)
             st.data_editor(
                 my_tasks.sort_values(by="الأولوية", ascending=False),
                 column_config={
-                    "الأولوية": st.column_config.ProgressColumn("الأهمية", format="%.2f", min_value=0, max_value=max(my_tasks['الأولوية'].max(), 10)),
+                    "الأولوية": st.column_config.ProgressColumn("الأهمية القصوى", format="%.2f", min_value=0, max_value=max(my_tasks['الأولوية'].max(), 10)),
                     "الصعوبة": st.column_config.NumberColumn("الصعوبة", format="%d ⭐"),
-                    "الأيام": st.column_config.NumberColumn("الوقت", format="%d يوم ⏳"),
+                    "الأيام": st.column_config.NumberColumn("الوقت المتبقي", format="%d يوم ⏳"),
                 },
                 hide_index=True, use_container_width=True, disabled=["الأولوية", "الطالب"]
             )
             st.markdown('</div>', unsafe_allow_html=True)
             csv = my_tasks.to_csv(index=False).encode('utf-8-sig')
-            st.download_button("📥 تحميل الجدول", csv, "Plan.csv", "text/csv", use_container_width=True)
+            st.download_button("📥 تحميل الخطة (Excel)", csv, "StudyPlan.csv", "text/csv", use_container_width=True)
         else: st.info("فارغ.")
-
-if st.session_state.logged_in: main_app()
-else: login_page()
+        
+    # --- 🧠 صفحة المستشار الذكي الجديدة ---
+    elif menu == "مستشار الذكاء":
+        st.markdown(f"<h2>{theme['ai_icon']} مستشارك الدراسي الذكي</h2>", unsafe_allow_html=True)
+        st.markdown('<div class="glass-card" data-tilt>', unsafe_allow_html=True)
+        st.write("قمت بتحليل جدولك الدراسي الحالي، وإليك تقريري المفصل ونصائحي لك:")
+        st.markdown("---")
+        
+        # استدعاء دالة الذكاء الاصطناعي
+        advice = get_ai_advice(my_tasks)
+        
+        # عرض النصيحة بشكل منسق
+        st.info(advice, icon=theme['ai_icon'])
+        
+        st.markdown("---")
+        st.caption("💡 ملحوظة: هذه النصائح مبنية على خوارزميات تحليلية لبياناتك المدخلة.")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+# ---------------------------------------------------------
+# 5. JS 3D Effect
+# ---------------------------------------------------------
+components.html("""
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.2/vanilla-tilt.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        function initTilt() {
+            var cards = window.parent.document.querySelectorAll('.glass-card');
+            VanillaTilt.init(cards, {
+                max: 8, speed: 400, glare: true, "max-glare": 0.3, scale: 1.02
+            });
+        }
+        setTimeout(initTilt, 1000);
+        setInterval(initTilt, 3000);
+    });
+</script>
+""", height=0, width=0)
