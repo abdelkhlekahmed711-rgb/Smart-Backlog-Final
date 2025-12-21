@@ -38,13 +38,16 @@ theme = {
 }
 
 # ---------------------------------------------------------
-# 3. CSS (إصلاح الجدول + الخلفية)
+# 3. CSS (الإجبار الشامل للموبايل)
 # ---------------------------------------------------------
 st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=El+Messiri:wght@400;500;600;700&display=swap');
 * {{ font-family: 'Almarai', sans-serif; }}
 h1, h2, h3, .stMetricLabel {{ font-family: 'El Messiri', sans-serif !important; letter-spacing: 0.5px; }}
+
+/* إجبار المتصفح على الوضع الليلي */
+:root {{ color-scheme: dark; }}
 
 .stApp {{
     background: linear-gradient(to bottom, #020617, #0f172a) !important;
@@ -72,7 +75,8 @@ section[data-testid="stSidebar"] {{
     background-color: {theme['sidebar_bg']} !important;
     border-right: 1px solid {theme['border']};
 }}
-section[data-testid="stSidebar"] span {{ color: #ffffff !important; }}
+/* إجبار نصوص القائمة */
+section[data-testid="stSidebar"] * {{ color: #ffffff !important; }}
 
 /* === 🔧 حقول الإدخال === */
 .stTextInput input, .stNumberInput input, .stPasswordInput input {{
@@ -101,23 +105,29 @@ div.stButton > button {{
     font-weight: bold; width: 100%; transition: 0.3s;
 }}
 
-/* === 📊 تنسيق الجدول الجديد (Cyber Grid) === */
-/* إزالة اللون الأبيض الافتراضي وجعله شفاف/غامق */
+/* === 📊 تنسيق الجدول (الإجبار العنيف) === */
 [data-testid="stDataEditor"] {{
     background-color: {theme['input_bg']} !important;
     border: 1px solid {theme['border']};
     border-radius: 15px;
+    color-scheme: dark !important; /* سر الموبايل */
 }}
 
-/* جعل الهيدر (رأس الجدول) غامق */
+[data-testid="stDataEditor"] div {{
+    color: white !important;
+    background-color: {theme['input_bg']} !important;
+}}
+
+/* رأس الجدول */
 [data-testid="stDataEditor"] div[role="columnheader"] {{
     background-color: {theme['sidebar_bg']} !important;
     color: {theme['primary']} !important;
     font-weight: bold !important;
+    border-bottom: 1px solid {theme['border']} !important;
 }}
 
-/* جعل الخلايا غامقة */
-[data-testid="stDataEditor"] div[role="gridcell"] {{
+/* تفاصيل الجدول الداخلية */
+[data-testid="stDataEditor"] table, [data-testid="stDataEditor"] tr, [data-testid="stDataEditor"] td {{
     background-color: {theme['input_bg']} !important;
     color: white !important;
 }}
@@ -284,23 +294,13 @@ def main_app():
         st.info("💡 يمكنك تعديل البيانات أو وضع علامة (✅) للإنجاز مباشرة هنا!")
         
         if not my_tasks.empty:
-            # === 👇 الجدول الجديد: ألوان + نجوم + شرائط 👇 ===
             edited_df = st.data_editor(
                 my_tasks.sort_values(by="الأولوية", ascending=False),
                 column_config={
                     "إنجاز": st.column_config.CheckboxColumn("تم؟", help="اضغط للإنهاء", default=False),
                     "المادة": st.column_config.TextColumn("المادة", help="اسم المادة"),
-                    "الأولوية": st.column_config.ProgressColumn(
-                        "الأهمية",
-                        format="%.2f",
-                        min_value=0,
-                        max_value=max(my_tasks['الأولوية'].max(), 10),
-                    ),
-                    "الصعوبة": st.column_config.NumberColumn(
-                        "الصعوبة",
-                        format="%d ⭐", # تحويل الرقم لنجوم
-                        min_value=1, max_value=10
-                    ),
+                    "الأولوية": st.column_config.ProgressColumn("الأهمية", format="%.2f", min_value=0, max_value=max(my_tasks['الأولوية'].max(), 10)),
+                    "الصعوبة": st.column_config.NumberColumn("الصعوبة", format="%d ⭐", min_value=1, max_value=10),
                     "الأيام": st.column_config.NumberColumn("متبقي (أيام)", format="%d ⏳"),
                     "الدروس": st.column_config.NumberColumn("دروس", format="%d 📚"),
                     "المحاضرات": st.column_config.NumberColumn("محاضرات", format="%d 🎓"),
