@@ -18,28 +18,27 @@ if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'user' not in st.session_state: st.session_state.user = {}
 
 # ---------------------------------------------------------
-# 2. نظام التصميم الموحد (The Ultimate Theme)
+# 2. نظام التصميم (Dark Titanium Fixed)
 # ---------------------------------------------------------
 theme = {
-    'bg_color': '#020617',           # خلفية الصفحة (كحلي غامق جداً)
-    'sidebar_bg': '#0f172a',         # خلفية القائمة
-    'glass': 'rgba(30, 41, 59, 0.70)', # لون الزجاج (رمادي مزرق شفاف)
-    'border': 'rgba(56, 189, 248, 0.5)', # حدود زرقاء سماوية
-    'primary': '#38bdf8',            # اللون الأساسي (أزرق سماوي)
-    'text': '#f1f5f9',               # لون النصوص (أبيض مائل للرمادي الفاتح - مريح للعين)
-    'text_sec': '#94a3b8',           # نصوص ثانوية
-    'input_bg': '#1e293b',           # خلفية حقول الإدخال (واضحة جداً)
-    'input_text': '#ffffff',         # نص الإدخال (أبيض ناصع)
-    'btn_grad': 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)', # تدرج الأزرار
-    'shadow': '0 8px 32px rgba(0, 0, 0, 0.3)', # ظل عميق
+    'bg_color': '#020617',           
+    'sidebar_bg': '#0f172a',         
+    'glass': 'rgba(30, 41, 59, 0.75)', # زجاج غامق
+    'border': 'rgba(56, 189, 248, 0.5)', 
+    'primary': '#38bdf8',            
+    'text': '#f8fafc',               # أبيض ناصع
+    'text_sec': '#94a3b8',           
+    'input_bg': '#1e293b',           # خلفية حقل الكتابة
+    'input_text': '#ffffff',         
+    'btn_grad': 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)', 
+    'shadow': '0 4px 20px rgba(0, 0, 0, 0.4)', 
     'chart_template': 'plotly_dark',
     'lottie_welcome': "https://lottie.host/94875632-7605-473d-8065-594ea470b355/9Z53657123.json",
-    'lottie_wait': "https://lottie.host/5a709b1f-d748-4b7d-949f-50a84e27771c/9qj8M4Zz2X.json",
     'ai_icon': '🤖'
 }
 
 # ---------------------------------------------------------
-# 3. CSS (مضبوط بالمللي للموبايل والكمبيوتر)
+# 3. CSS (خلفية ثابتة ونظيفة)
 # ---------------------------------------------------------
 st.markdown(f"""
 <style>
@@ -47,27 +46,22 @@ st.markdown(f"""
 * {{ font-family: 'Almarai', sans-serif; }}
 h1, h2, h3, .stMetricLabel {{ font-family: 'El Messiri', sans-serif !important; letter-spacing: 0.5px; }}
 
-/* خلفية الصفحة مع النجوم المتحركة */
+/* === الخلفية الجديدة (تدرج لوني ناعم وثابت) === */
 .stApp {{
-    background-color: {theme['bg_color']} !important;
-    background-image: radial-gradient(white 1px, transparent 1px);
-    background-size: 50px 50px;
-    animation: stars 60s linear infinite;
+    background: linear-gradient(to bottom, #020617, #0f172a) !important;
+    background-attachment: fixed !important;
 }}
-@keyframes stars {{ 0% {{background-position: 0 0;}} 100% {{background-position: 50px 50px;}} }}
 
 /* توحيد لون النصوص */
 .stApp, p, span, label, div, .stMarkdown, h1, h2, h3, h4, h5, h6 {{ color: {theme['text']} !important; }}
 .small-text {{ color: {theme['text_sec']} !important; font-size: 0.85rem; }}
 
 /* === 📱 تحسينات الموبايل 📱 === */
-/* إجبار الهيدر على الظهور لزر القائمة */
 header[data-testid="stHeader"] {{
     background: transparent !important;
     display: block !important; visibility: visible !important;
     z-index: 999;
 }}
-/* زر القائمة (Hamburger) */
 button[kind="header"] {{
     color: {theme['primary']} !important;
     background: {theme['input_bg']} !important;
@@ -75,7 +69,7 @@ button[kind="header"] {{
     border-radius: 8px !important;
 }}
 
-/* إخفاء العناصر غير الضرورية */
+/* إخفاء العناصر الزائدة */
 .stDeployButton, [data-testid="stDecoration"], footer {{ display: none !important; }}
 
 /* القائمة الجانبية */
@@ -83,10 +77,9 @@ section[data-testid="stSidebar"] {{
     background-color: {theme['sidebar_bg']} !important;
     border-right: 1px solid {theme['border']};
 }}
-/* نصوص القائمة */
 [data-testid="stSidebar"] * {{ color: {theme['text']} !important; }}
 
-/* === 🔧 حقول الإدخال (الأهم) === */
+/* === 🔧 حقول الإدخال (واضحة جداً) === */
 .stTextInput input, .stNumberInput input, .stPasswordInput input {{
     background-color: {theme['input_bg']} !important;
     color: {theme['input_text']} !important;
@@ -95,7 +88,6 @@ section[data-testid="stSidebar"] {{
     padding: 12px !important;
     font-weight: 600 !important;
 }}
-/* لون النص الإرشادي */
 ::placeholder {{ color: {theme['text_sec']} !important; opacity: 0.7; }}
 
 /* البطاقات الزجاجية */
@@ -115,7 +107,7 @@ div.stButton > button {{
 }}
 div.stButton > button:hover {{ transform: scale(1.02); box-shadow: 0 0 15px {theme['primary']}; }}
 
-/* الجداول والرسوم */
+/* الجداول */
 div[data-testid="stDataEditor"] {{
     border: 1px solid {theme['border']}; border-radius: 15px;
 }}
@@ -154,16 +146,11 @@ def load_data(file):
 def save_data(df, file): df.to_csv(file, index=False)
 init_dbs()
 
-# --- 🧠 الذكاء الاصطناعي (تحفيز + تحليل) ---
+# --- الذكاء الاصطناعي ---
 motivational_quotes = [
-    "النجاح ليس صدفة، إنه عمل شاق، مثابرة، تعلم، وتضحية.",
-    "لا تؤجل عمل اليوم إلى الغد، فالغد لديه أشغاله أيضاً.",
-    "قمة الجبل لا يصل إليها إلا من تسلق الصخور.",
-    "كل دقيقة ألم في الدراسة تمنحك سنوات من الراحة في المستقبل.",
-    "أنت أقوى مما تتخيل، وأذكى مما تظن.",
-    "الفرق بين المستحيل والممكن يتوقف على عزيمتك."
+    "النجاح ليس صدفة، إنه عمل شاق.", "لا تؤجل عمل اليوم إلى الغد.",
+    "قمة الجبل لا يصل إليها إلا من تسلق الصخور.", "أنت أقوى مما تتخيل."
 ]
-
 def get_ai_advice(df):
     if df.empty: return "جدولك فارغ! ابدأ الآن. 🚀"
     total = df['الدروس'].sum() + df['المحاضرات'].sum()
@@ -173,7 +160,6 @@ def get_ai_advice(df):
     advice = f"📊 **تحليل:** لديك {int(total)} مهمة.\n"
     if total > 20: advice += "⚡ **نصيحة:** التراكمات كثيرة، ركز على مادة واحدة اليوم."
     else: advice += "✅ **نصيحة:** وضعك مستقر، استمر."
-    
     if not urgent.empty: advice += f"\n🔥 **تنبيه:** {len(urgent)} امتحانات قريبة!"
     advice += f"\n\n✨ **حكمة:** {quote}"
     return advice
@@ -202,8 +188,8 @@ def login_page():
         tab_log, tab_reg = st.tabs(["تسجيل دخول", "حساب جديد"])
         
         with tab_log:
-            u = st.text_input("اسم المستخدم", key="u1", placeholder="مثال: admin")
-            p = st.text_input("كلمة المرور", type="password", key="p1", placeholder="******")
+            u = st.text_input("اسم المستخدم", key="u1", placeholder="user")
+            p = st.text_input("كلمة المرور", type="password", key="p1", placeholder="pass")
             if st.button("دخول للنظام 🚀", key="btn_login"):
                 users = load_data(USERS_DB)
                 found = users[(users['username'] == u) & (users['password'] == p)]
@@ -275,7 +261,7 @@ def main_app():
                 fig2 = px.pie(my_tasks, values='الكل', names='المادة', hole=0.6, template=theme['chart_template'])
                 fig2.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_family="Almarai", font_color='white', margin=dict(l=0,r=0,t=0,b=0), showlegend=False)
                 st.plotly_chart(fig2, use_container_width=True)
-        else: st.info("لا توجد بيانات لعرضها.")
+        else: st.info("لا توجد بيانات.")
 
     elif menu == "إضافة مهام":
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
