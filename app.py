@@ -91,48 +91,57 @@ h1, h2, h3, .stMetricLabel {{ font-family: 'El Messiri', sans-serif !important; 
 {bg_css}
 
 /* ========================================= */
-/* ⛔⛔⛔ منطقة الحظر الشامل ⛔⛔⛔ */
+/* ⛔⛔⛔ منطقة الحظر الشامل (Ghost Mode) ⛔⛔⛔ */
 /* ========================================= */
 
-/* إخفاء الهيدر الأساسي بالكامل */
+/* 1. إخفاء الهيدر العلوي بالكامل */
 header[data-testid="stHeader"] {{
     display: none !important;
     visibility: hidden !important;
+    height: 0px !important;
 }}
 
-/* إخفاء شريط الأدوات (الثلاث شرط + القائمة) */
+/* 2. إخفاء شريط الأدوات (الثلاث شرط + القائمة + Share) */
 [data-testid="stToolbar"] {{
     display: none !important;
     visibility: hidden !important;
 }}
 
-/* إخفاء الفوتر السفلي */
+/* 3. إخفاء الفوتر السفلي */
 footer {{
     display: none !important;
     visibility: hidden !important;
 }}
-
-/* إخفاء زرار "Deploy" للمطورين */
-.stDeployButton {{
+.stFooter {{
     display: none !important;
     visibility: hidden !important;
 }}
 
-/* إخفاء الشريط الملون العلوي (Decoration) */
+/* 4. إخفاء زرار "Manage app" وزرار "Deploy" */
+.stDeployButton {{
+    display: none !important;
+    visibility: hidden !important;
+}}
+[data-testid="stManageAppButton"] {{
+    display: none !important;
+}}
+
+/* 5. إخفاء الشريط الملون العلوي (Decoration) */
 [data-testid="stDecoration"] {{
     display: none !important;
     visibility: hidden !important;
 }}
 
-/* إخفاء أيقونات الحالة */
+/* 6. إخفاء أيقونات الحالة (Running Man) */
 [data-testid="stStatusWidget"] {{
     display: none !important;
     visibility: hidden !important;
 }}
 
-/* رفع الصفحة لأعلى لتغطية الفراغ */
+/* 7. رفع الصفحة لأعلى لتغطية الفراغ الناتج عن إخفاء الهيدر */
 .block-container {{
     padding-top: 0rem !important;
+    margin-top: -50px !important; /* سحب المحتوى للأعلى */
 }}
 
 /* ========================================= */
@@ -140,6 +149,7 @@ footer {{
 section[data-testid="stSidebar"] {{
     background-color: {theme['sidebar_bg']} !important;
     backdrop-filter: blur(20px); border-right: 1px solid {theme['border']};
+    padding-top: 2rem !important; /* مسافة بسيطة داخل القائمة */
 }}
 
 section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] div {{
@@ -178,16 +188,34 @@ p, span, label, div {{ color: {theme['text']}; }}
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 3. إدارة البيانات
+# 3. إدارة البيانات (تحديث لتلبية شرط الـ 20 ملف)
 # ---------------------------------------------------------
 TASKS_DB = 'smart_tasks.csv'
 USERS_DB = 'smart_users.csv'
 
 def init_dbs():
+    # 1. إنشاء ملف المستخدمين
     if not os.path.exists(USERS_DB):
         pd.DataFrame([{"username": "admin", "password": "123", "name": "Admin", "role": "admin"}]).to_csv(USERS_DB, index=False)
+    
+    # 2. إنشاء ملف المهام مع بيانات افتراضية (25 مادة)
     if not os.path.exists(TASKS_DB):
-        pd.DataFrame(columns=["المادة", "الدروس", "المحاضرات", "الصعوبة", "الأيام", "الأولوية", "الطالب"]).to_csv(TASKS_DB, index=False)
+        data = {
+            "المادة": ["اللغة العربية", "الفيزياء", "الكيمياء", "الأحياء", "الرياضيات", "اللغة الإنجليزية", "التاريخ", "الجغرافيا", "الفلسفة", "علم النفس", "الفيزياء (مراجعة)", "الكيمياء (عضوية)", "نحو وصرف", "تفاضل", "اللغة الفرنسية", "التربية الوطنية", "الإحصاء", "الجيولوجيا", "الأحياء (وراثة)", "قصة الإنجليزي", "ميكانيكا", "استاتيكا", "جبر", "هندسة فراغية", "بلاغة"],
+            "الدروس": [2, 5, 3, 1, 4, 2, 0, 1, 2, 3, 6, 2, 1, 5, 0, 1, 0, 2, 3, 4, 2, 3, 1, 2, 5],
+            "المحاضرات": [1, 2, 1, 0, 3, 1, 0, 1, 0, 1, 3, 1, 0, 2, 0, 0, 0, 1, 1, 2, 1, 2, 1, 1, 2],
+            "الصعوبة": [3, 9, 8, 5, 10, 4, 2, 3, 4, 3, 9, 7, 5, 10, 3, 1, 2, 6, 7, 5, 8, 9, 7, 8, 6],
+            "الأيام": [10, 5, 7, 12, 4, 15, 20, 18, 14, 13, 6, 8, 9, 3, 25, 30, 28, 11, 10, 14, 7, 6, 8, 9, 12],
+            "الأولوية": [],
+            "الطالب": ["admin"] * 25 
+        }
+        
+        for i in range(25):
+            prio = (data["الصعوبة"][i] * (data["الدروس"][i] + data["المحاضرات"][i])) / max(data["الأيام"][i], 1)
+            data["الأولوية"].append(round(prio, 2))
+            
+        df = pd.DataFrame(data)
+        df.to_csv(TASKS_DB, index=False)
 
 def load_data(file): 
     df = pd.read_csv(file, dtype=str)
