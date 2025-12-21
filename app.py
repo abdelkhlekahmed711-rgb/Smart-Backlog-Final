@@ -23,7 +23,7 @@ if 'user' not in st.session_state: st.session_state.user = {}
 theme = {
     'bg_color': '#020617',           
     'sidebar_bg': '#0f172a',         
-    'glass': 'rgba(30, 41, 59, 0.75)',
+    'glass': 'rgba(30, 41, 59, 0.70)',
     'border': 'rgba(56, 189, 248, 0.5)', 
     'primary': '#38bdf8',            
     'text': '#f8fafc',
@@ -38,7 +38,7 @@ theme = {
 }
 
 # ---------------------------------------------------------
-# 3. CSS
+# 3. CSS (إصلاح الجدول + الخلفية)
 # ---------------------------------------------------------
 st.markdown(f"""
 <style>
@@ -101,17 +101,31 @@ div.stButton > button {{
     font-weight: bold; width: 100%; transition: 0.3s;
 }}
 
-/* الجداول - تنسيق احترافي */
-div[data-testid="stDataEditor"] {{
-    border: 1px solid {theme['border']}; 
+/* === 📊 تنسيق الجدول الجديد (Cyber Grid) === */
+/* إزالة اللون الأبيض الافتراضي وجعله شفاف/غامق */
+[data-testid="stDataEditor"] {{
+    background-color: {theme['input_bg']} !important;
+    border: 1px solid {theme['border']};
     border-radius: 15px;
-    background-color: {theme['input_bg']};
+}}
+
+/* جعل الهيدر (رأس الجدول) غامق */
+[data-testid="stDataEditor"] div[role="columnheader"] {{
+    background-color: {theme['sidebar_bg']} !important;
+    color: {theme['primary']} !important;
+    font-weight: bold !important;
+}}
+
+/* جعل الخلايا غامقة */
+[data-testid="stDataEditor"] div[role="gridcell"] {{
+    background-color: {theme['input_bg']} !important;
+    color: white !important;
 }}
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 4. البيانات (تحديث الهيكل ليشمل Checkbox)
+# 4. البيانات
 # ---------------------------------------------------------
 TASKS_DB = 'smart_tasks.csv'
 USERS_DB = 'smart_users.csv'
@@ -121,7 +135,7 @@ def init_dbs():
         pd.DataFrame([{"username": "admin", "password": "123", "name": "Admin", "role": "admin"}]).to_csv(USERS_DB, index=False)
     if not os.path.exists(TASKS_DB):
         data = {
-            "إنجاز": [False] * 25, # عمود جديد
+            "إنجاز": [False] * 25,
             "المادة": ["اللغة العربية", "الفيزياء", "الكيمياء", "الأحياء", "الرياضيات", "اللغة الإنجليزية", "التاريخ", "الجغرافيا", "الفلسفة", "علم النفس", "الفيزياء (مراجعة)", "الكيمياء (عضوية)", "نحو وصرف", "تفاضل", "اللغة الفرنسية", "التربية الوطنية", "الإحصاء", "الجيولوجيا", "الأحياء (وراثة)", "قصة الإنجليزي", "ميكانيكا", "استاتيكا", "جبر", "هندسة فراغية", "بلاغة"],
             "الدروس": [2, 5, 3, 1, 4, 2, 0, 1, 2, 3, 6, 2, 1, 5, 0, 1, 0, 2, 3, 4, 2, 3, 1, 2, 5],
             "المحاضرات": [1, 2, 1, 0, 3, 1, 0, 1, 0, 1, 3, 1, 0, 2, 0, 0, 0, 1, 1, 2, 1, 2, 1, 1, 2],
@@ -138,14 +152,11 @@ def init_dbs():
 
 def load_data(file): 
     df = pd.read_csv(file, dtype=str)
-    # تأمين ضد الأخطاء لو الملف قديم
     if file == TASKS_DB:
         if 'إنجاز' not in df.columns: df.insert(0, 'إنجاز', 'False')
         if 'المحاضرات' not in df.columns: df['المحاضرات'] = '0'
-        # تحويل الأعمدة الرقمية
         for c in ['الدروس', 'المحاضرات', 'الأولوية', 'الصعوبة', 'الأيام']:
             df[c] = pd.to_numeric(df[c], errors='coerce').fillna(0)
-        # تحويل عمود الإنجاز لبوليان (صح/خطأ)
         df['إنجاز'] = df['إنجاز'].map({'True': True, 'False': False, True: True, False: False})
     return df
 
@@ -241,22 +252,18 @@ def main_app():
             st.session_state.logged_in = False
             st.rerun()
 
-    # تحميل وتجهيز البيانات
     tasks = load_data(TASKS_DB)
     my_tasks = tasks if st.session_state.user['role'] == 'admin' else tasks[tasks['الطالب'] == st.session_state.user['username']]
 
     if menu == "لوحة التحكم":
         st.markdown(f"<h2>مرحباً بك 👋</h2>", unsafe_allow_html=True)
         if not my_tasks.empty:
-            # تصفية المهام المنجزة وغير المنجزة
             pending = my_tasks[my_tasks['إنجاز'] == False]
             completed = my_tasks[my_tasks['إنجاز'] == True]
-            
             c1, c2, c3 = st.columns(3)
             total_items = int(pending['الدروس'].sum() + pending['المحاضرات'].sum())
-            
-            with c1: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>المواد المتبقية</h3><h1>{len(pending)}</h1></div>', unsafe_allow_html=True)
-            with c2: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>إجمالي التراكمات</h3><h1>{total_items}</h1></div>', unsafe_allow_html=True)
+            with c1: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>المتبقي</h3><h1>{len(pending)}</h1></div>', unsafe_allow_html=True)
+            with c2: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>التراكمات</h3><h1>{total_items}</h1></div>', unsafe_allow_html=True)
             with c3: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>تم إنجازه ✅</h3><h1>{len(completed)}</h1></div>', unsafe_allow_html=True)
             
             g1, g2 = st.columns([1.5, 1])
@@ -277,15 +284,12 @@ def main_app():
         st.info("💡 يمكنك تعديل البيانات أو وضع علامة (✅) للإنجاز مباشرة هنا!")
         
         if not my_tasks.empty:
-            # الجدول التفاعلي الرهيب
+            # === 👇 الجدول الجديد: ألوان + نجوم + شرائط 👇 ===
             edited_df = st.data_editor(
                 my_tasks.sort_values(by="الأولوية", ascending=False),
                 column_config={
-                    "إنجاز": st.column_config.CheckboxColumn(
-                        "تم؟",
-                        help="اضغط هنا عند الانتهاء من المادة",
-                        default=False,
-                    ),
+                    "إنجاز": st.column_config.CheckboxColumn("تم؟", help="اضغط للإنهاء", default=False),
+                    "المادة": st.column_config.TextColumn("المادة", help="اسم المادة"),
                     "الأولوية": st.column_config.ProgressColumn(
                         "الأهمية",
                         format="%.2f",
@@ -294,27 +298,24 @@ def main_app():
                     ),
                     "الصعوبة": st.column_config.NumberColumn(
                         "الصعوبة",
-                        format="%d ⭐",
+                        format="%d ⭐", # تحويل الرقم لنجوم
                         min_value=1, max_value=10
                     ),
-                    "الأيام": st.column_config.NumberColumn(
-                        "الأيام المتبقية",
-                        format="%d ⏳"
-                    ),
+                    "الأيام": st.column_config.NumberColumn("متبقي (أيام)", format="%d ⏳"),
+                    "الدروس": st.column_config.NumberColumn("دروس", format="%d 📚"),
+                    "المحاضرات": st.column_config.NumberColumn("محاضرات", format="%d 🎓"),
                 },
-                disabled=["الطالب"], # منع تعديل اسم الطالب
+                disabled=["الطالب"],
                 hide_index=True,
                 use_container_width=True,
-                num_rows="dynamic" # السماح بإضافة وحذف صفوف
+                num_rows="dynamic"
             )
             
-            # زر الحفظ اليدوي للتأكيد (اختياري لأن المحرر يحفظ تلقائياً في الذاكرة لكن نحتاج للكتابة في الملف)
             if st.button("💾 حفظ التعديلات نهائياً"):
                 save_data(edited_df, TASKS_DB)
                 st.success("تم تحديث الجدول بنجاح! 🎉")
                 time.sleep(1)
                 st.rerun()
-                
         else: st.info("الجدول فارغ.")
         st.markdown('</div>', unsafe_allow_html=True)
     
