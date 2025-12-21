@@ -5,6 +5,8 @@ import os
 import requests
 import time
 import random
+import math
+from datetime import date, timedelta, datetime
 import streamlit.components.v1 as components
 from streamlit_lottie import st_lottie
 from streamlit_option_menu import option_menu
@@ -50,22 +52,21 @@ p, span, label, div, h1, h2, h3, h4, h5, h6, .stMarkdown {{
     color: {colors['text']} !important;
 }}
 
-/* 3. إصلاح حقول الإدخال (المشكلة الرئيسية في الموبايل) */
+/* 3. إصلاح حقول الإدخال */
 input, textarea, select {{
     background-color: {colors['input_bg']} !important;
-    color: white !important; /* لون الخط أبيض */
-    -webkit-text-fill-color: white !important; /* للأندرويد والآيفون */
-    caret-color: {colors['primary']} !important; /* لون المؤشر */
+    color: white !important;
+    -webkit-text-fill-color: white !important;
+    caret-color: {colors['primary']} !important;
     border: 1px solid {colors['border']} !important;
 }}
 
-/* 4. تنسيق الجدول ليكون غامقاً */
+/* 4. تنسيق الجدول */
 [data-testid="stDataEditor"] {{
     border: 1px solid {colors['border']};
     border-radius: 10px;
     background-color: {colors['card_bg']} !important;
 }}
-/* خلايا الجدول */
 [data-testid="stDataEditor"] div {{
     color: white !important;
     background-color: {colors['card_bg']} !important;
@@ -77,7 +78,7 @@ section[data-testid="stSidebar"] {{
     border-right: 1px solid {colors['border']};
 }}
 
-/* 6. إصلاح زر القائمة في الموبايل */
+/* 6. إصلاح زر القائمة */
 header[data-testid="stHeader"] {{
     background: transparent !important;
     display: block !important; visibility: visible !important;
@@ -90,7 +91,6 @@ button[kind="header"] {{
     border-radius: 5px !important;
 }}
 
-/* إخفاء العناصر المزعجة */
 .stDeployButton, [data-testid="stDecoration"], footer {{ display: none !important; }}
 
 /* البطاقات */
@@ -122,19 +122,18 @@ def init_dbs():
     if not os.path.exists(USERS_DB):
         pd.DataFrame([{"username": "admin", "password": "123", "name": "Admin", "role": "admin"}]).to_csv(USERS_DB, index=False)
     if not os.path.exists(TASKS_DB):
+        # تم تحديث الهيكل ليشمل تاريخ التنفيذ
         data = {
-            "إنجاز": [False] * 25,
-            "المادة": ["اللغة العربية", "الفيزياء", "الكيمياء", "الأحياء", "الرياضيات", "اللغة الإنجليزية", "التاريخ", "الجغرافيا", "الفلسفة", "علم النفس", "الفيزياء (مراجعة)", "الكيمياء (عضوية)", "نحو وصرف", "تفاضل", "اللغة الفرنسية", "التربية الوطنية", "الإحصاء", "الجيولوجيا", "الأحياء (وراثة)", "قصة الإنجليزي", "ميكانيكا", "استاتيكا", "جبر", "هندسة فراغية", "بلاغة"],
-            "الدروس": [2, 5, 3, 1, 4, 2, 0, 1, 2, 3, 6, 2, 1, 5, 0, 1, 0, 2, 3, 4, 2, 3, 1, 2, 5],
-            "المحاضرات": [1, 2, 1, 0, 3, 1, 0, 1, 0, 1, 3, 1, 0, 2, 0, 0, 0, 1, 1, 2, 1, 2, 1, 1, 2],
-            "الصعوبة": [3, 9, 8, 5, 10, 4, 2, 3, 4, 3, 9, 7, 5, 10, 3, 1, 2, 6, 7, 5, 8, 9, 7, 8, 6],
-            "الأيام": [10, 5, 7, 12, 4, 15, 20, 18, 14, 13, 6, 8, 9, 3, 25, 30, 28, 11, 10, 14, 7, 6, 8, 9, 12],
-            "الأولوية": [],
-            "الطالب": ["admin"] * 25 
+            "إنجاز": [False],
+            "المادة": ["مثال: فيزياء"],
+            "الدروس": [1],
+            "المحاضرات": [0],
+            "الصعوبة": [5],
+            "الأيام": [10],
+            "الأولوية": [5.0],
+            "تاريخ_التنفيذ": [str(date.today())], # عمود جديد للجدولة
+            "الطالب": ["admin"]
         }
-        for i in range(25):
-            prio = (data["الصعوبة"][i] * (data["الدروس"][i] + data["المحاضرات"][i])) / max(data["الأيام"][i], 1)
-            data["الأولوية"].append(round(prio, 2))
         df = pd.DataFrame(data)
         df.to_csv(TASKS_DB, index=False)
 
@@ -142,10 +141,13 @@ def load_data(file):
     df = pd.read_csv(file, dtype=str)
     if file == TASKS_DB:
         if 'إنجاز' not in df.columns: df.insert(0, 'إنجاز', 'False')
-        if 'المحاضرات' not in df.columns: df['المحاضرات'] = '0'
+        if 'تاريخ_التنفيذ' not in df.columns: df['تاريخ_التنفيذ'] = str(date.today()) # حماية من الأخطاء القديمة
+        
+        # تحويل الأعمدة الرقمية
         for c in ['الدروس', 'المحاضرات', 'الأولوية', 'الصعوبة', 'الأيام']:
             df[c] = pd.to_numeric(df[c], errors='coerce').fillna(0)
-        df['إنجاز'] = df['إنجاز'].map({'True': True, 'False': False, True: True, False: False})
+            
+        df['إنجاز'] = df['إنجاز'].map({'True': True, 'False': False, True: True, False: False, 'TRUE': True, 'FALSE': False})
     return df
 
 def save_data(df, file): df.to_csv(file, index=False)
@@ -157,12 +159,10 @@ def get_ai_advice(df):
     if df.empty: return "جدولك فارغ! ابدأ الآن. 🚀"
     pending = df[df['إنجاز'] == False]
     total = pending['الدروس'].sum() + pending['المحاضرات'].sum()
-    urgent = pending[pending['الأيام'] <= 5]
+    urgent = pending[pending['الأيام'] <= 3]
     quote = random.choice(motivational_quotes)
     advice = f"📊 **تحليل:** متبقي {int(total)} مهمة.\n"
-    if total > 20: advice += "⚡ **نصيحة:** التراكمات كثيرة، ركز على مادة واحدة اليوم."
-    else: advice += "✅ **نصيحة:** وضعك مستقر."
-    if not urgent.empty: advice += f"\n🔥 **تنبيه:** {len(urgent)} امتحانات قريبة!"
+    if not urgent.empty: advice += f"\n🔥 **طوارئ:** لديك {len(urgent)} مهام موعدها قريب جداً!"
     advice += f"\n\n✨ **حكمة:** {quote}"
     return advice
 
@@ -174,7 +174,49 @@ def load_lottie(url):
     except: return None
 
 # ---------------------------------------------------------
-# 5. الواجهة
+# 5. منطق الموزع الذكي (الجديد)
+# ---------------------------------------------------------
+def distribute_backlog(df, subject, amount, deadline, username):
+    start_date = date.today()
+    days_available = (deadline - start_date).days
+    
+    if days_available <= 0:
+        return df, False, "التاريخ يجب أن يكون في المستقبل!"
+
+    daily_quota = math.ceil(amount / days_available)
+    new_rows = []
+    current_unit = 1
+    
+    for i in range(days_available):
+        current_day_date = start_date + timedelta(days=i)
+        
+        for _ in range(daily_quota):
+            if current_unit <= amount:
+                # إنشاء صف جديد للمهمة
+                new_row = {
+                    "إنجاز": False,
+                    "المادة": f"{subject} - جزء {current_unit} (إنقاذ)",
+                    "الدروس": 1, # نعتبر كل جزء درس واحد
+                    "المحاضرات": 0,
+                    "الصعوبة": 10, # أولوية قصوى لأنها إنقاذ
+                    "الأيام": (deadline - current_day_date).days, # الأيام المتبقية حتى الديدلاين
+                    "الأولوية": 100.0, # رقم عالي جداً لتظهر في الأول
+                    "تاريخ_التنفيذ": str(current_day_date),
+                    "الطالب": username
+                }
+                new_rows.append(new_row)
+                current_unit += 1
+            else:
+                break
+                
+    if new_rows:
+        new_df = pd.DataFrame(new_rows)
+        updated_df = pd.concat([df, new_df], ignore_index=True)
+        return updated_df, True, f"تم إضافة {current_unit-1} مهمة لجدولك بنجاح!"
+    return df, False, "لم يتم إضافة مهام."
+
+# ---------------------------------------------------------
+# 6. الواجهة
 # ---------------------------------------------------------
 def login_page():
     c1, c2, c3 = st.columns([1, 1.8, 1])
@@ -223,8 +265,8 @@ def main_app():
         </div>
         """, unsafe_allow_html=True)
 
-        menu = option_menu("القائمة", ["لوحة التحكم", "الجدول التفاعلي", "المستشار"], 
-            icons=['speedometer', 'table', 'robot'], menu_icon="cast", default_index=0,
+        menu = option_menu("القائمة", ["لوحة التحكم", "غرفة الإنقاذ", "الجدول التفاعلي", "المستشار"], 
+            icons=['speedometer', 'life-preserver', 'table', 'robot'], menu_icon="cast", default_index=0,
             styles={
                 "container": {"padding": "5px", "background-color": "#0f172a"}, 
                 "icon": {"color": "#38bdf8", "font-size": "18px"}, 
@@ -240,6 +282,7 @@ def main_app():
     tasks = load_data(TASKS_DB)
     my_tasks = tasks if st.session_state.user['role'] == 'admin' else tasks[tasks['الطالب'] == st.session_state.user['username']]
 
+    # --- لوحة التحكم ---
     if menu == "لوحة التحكم":
         st.markdown(f"<h2>مرحباً بك 👋</h2>", unsafe_allow_html=True)
         if not my_tasks.empty:
@@ -248,48 +291,116 @@ def main_app():
             c1, c2, c3 = st.columns(3)
             total = int(pending['الدروس'].sum() + pending['المحاضرات'].sum())
             with c1: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>المتبقي</h3><h1>{len(pending)}</h1></div>', unsafe_allow_html=True)
-            with c2: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>التراكمات</h3><h1>{total}</h1></div>', unsafe_allow_html=True)
+            with c2: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>وحدات المذاكرة</h3><h1>{total}</h1></div>', unsafe_allow_html=True)
             with c3: st.markdown(f'<div class="glass-card" style="text-align:center"><h3>تم إنجازه ✅</h3><h1>{len(completed)}</h1></div>', unsafe_allow_html=True)
             
             g1, g2 = st.columns([1.5, 1])
             with g1:
                 pending['الكل'] = pending['الدروس'] + pending['المحاضرات']
-                fig = px.bar(pending, x='المادة', y='الأولوية', color='الأولوية', template='plotly_dark', color_continuous_scale='Bluyl')
-                fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_family="Almarai", font_color='white', margin=dict(l=0,r=0,t=0,b=0))
-                st.plotly_chart(fig, use_container_width=True)
+                if not pending.empty:
+                    fig = px.bar(pending.head(10), x='المادة', y='الأولوية', color='الأولوية', template='plotly_dark', title="أهم المهام حالياً")
+                    fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_family="Almarai", font_color='white')
+                    st.plotly_chart(fig, use_container_width=True)
             with g2:
-                fig2 = px.pie(pending, values='الكل', names='المادة', hole=0.6, template='plotly_dark')
-                fig2.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_family="Almarai", font_color='white', margin=dict(l=0,r=0,t=0,b=0), showlegend=False)
-                st.plotly_chart(fig2, use_container_width=True)
+                if not pending.empty:
+                    fig2 = px.pie(pending, values='الكل', names='المادة', hole=0.6, template='plotly_dark', title="توزيع الحمل")
+                    fig2.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_family="Almarai", font_color='white', showlegend=False)
+                    st.plotly_chart(fig2, use_container_width=True)
         else: st.info("لا توجد بيانات.")
 
+    # --- غرفة الإنقاذ (الجديدة) ---
+    elif menu == "غرفة الإنقاذ":
+        st.markdown(f"<h2>🚑 غرفة الإنقاذ وتفتيت التراكمات</h2>", unsafe_allow_html=True)
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.write("استخدم هذه الأداة لتحويل مادة كاملة متراكمة إلى مهام يومية صغيرة في جدولك.")
+        
+        with st.form("rescue_form"):
+            col1, col2 = st.columns(2)
+            with col1:
+                subj = st.text_input("اسم المادة المتراكمة", placeholder="مثال: كيمياء عضوية")
+                amt = st.number_input("كم درس/محاضرة متراكمة؟", min_value=1, value=5)
+            with col2:
+                d_date = st.date_input("موعد الانتهاء النهائي (الديدلاين)", min_value=date.today() + timedelta(days=1))
+                st.write("") # Spacer
+                st.write("") 
+            
+            submit_rescue = st.form_submit_button("🚀 فتت التراكمات ووزعها في جدولي")
+        
+        if submit_rescue:
+            if subj:
+                # استخدام قاعدة البيانات المحملة حالياً للتحديث
+                updated_tasks, success, msg = distribute_backlog(
+                    tasks, # نرسل قاعدة البيانات الأصلية الكاملة
+                    subj, 
+                    amt, 
+                    d_date, 
+                    st.session_state.user['username']
+                )
+                if success:
+                    save_data(updated_tasks, TASKS_DB) # الحفظ الفعلي
+                    st.balloons()
+                    st.success(msg)
+                    time.sleep(2)
+                    st.rerun()
+                else:
+                    st.error(msg)
+            else:
+                st.warning("أدخل اسم المادة!")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # --- الجدول التفاعلي ---
     elif menu == "الجدول التفاعلي":
-        st.markdown(f"<h2>🤖 الجدول التفاعلي</h2>", unsafe_allow_html=True)
+        st.markdown(f"<h2>🗓️ جدول المهام اليومي</h2>", unsafe_allow_html=True)
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         
         if not my_tasks.empty:
+            # ترتيب حسب الأولوية وتاريخ التنفيذ
+            my_tasks = my_tasks.sort_values(by=["إنجاز", "تاريخ_التنفيذ", "الأولوية"], ascending=[True, True, False])
+            
             edited_df = st.data_editor(
-                my_tasks.sort_values(by="الأولوية", ascending=False),
+                my_tasks,
                 column_config={
                     "إنجاز": st.column_config.CheckboxColumn("تم؟", default=False),
-                    "المادة": st.column_config.TextColumn("المادة"),
-                    "الأولوية": st.column_config.ProgressColumn("الأهمية", format="%.2f", min_value=0, max_value=100),
+                    "المادة": st.column_config.TextColumn("المهمة / المادة", width="large"),
+                    "تاريخ_التنفيذ": st.column_config.DateColumn("تاريخ التنفيذ", format="YYYY-MM-DD"),
+                    "الأولوية": st.column_config.ProgressColumn("الأهمية", format="%.0f", min_value=0, max_value=100),
                     "الصعوبة": st.column_config.NumberColumn("الصعوبة", format="%d ⭐"),
                     "الأيام": st.column_config.NumberColumn("متبقي (أيام)", format="%d ⏳"),
+                    "الدروس": st.column_config.NumberColumn("وحدات", format="%d"),
                 },
                 disabled=["الطالب"],
+                column_order=["إنجاز", "المادة", "تاريخ_التنفيذ", "الأولوية", "الصعوبة", "الدروس"], # ترتيب الأعمدة للعرض
                 hide_index=True,
                 use_container_width=True,
                 num_rows="dynamic"
             )
             if st.button("💾 حفظ التعديلات"):
-                save_data(edited_df, TASKS_DB)
+                # دمج التعديلات مع قاعدة البيانات الأصلية (في حالة الأدمن يرى الكل)
+                if st.session_state.user['role'] == 'admin':
+                    save_data(edited_df, TASKS_DB)
+                else:
+                    # تحديث فقط صفوف الطالب الحالي في قاعدة البيانات الرئيسية
+                    # هذه خطوة متقدمة قليلاً لضمان عدم حذف بيانات الآخرين
+                    # للتبسيط هنا سنفترض أن الملف يحمل ويحفظ بالكامل، 
+                    # ولكن في التطبيق الحقيقي يجب دمج البيانات بعناية.
+                    # هنا سنقوم بحفظ التعديلات على الملف مباشرة لأننا قمنا بفلترة العرض فقط
+                    # ولكن للحفظ الصحيح يجب تحديث السطور الخاصة بالطالب فقط في الملف الأصلي
+                    
+                    # الحل البسيط والفعال هنا:
+                    final_df = load_data(TASKS_DB)
+                    # حذف بيانات الطالب القديمة
+                    final_df = final_df[final_df['الطالب'] != st.session_state.user['username']]
+                    # إضافة البيانات الجديدة المعدلة
+                    final_df = pd.concat([final_df, edited_df], ignore_index=True)
+                    save_data(final_df, TASKS_DB)
+
                 st.success("تم التحديث!")
                 time.sleep(1)
                 st.rerun()
-        else: st.info("الجدول فارغ.")
+        else: st.info("الجدول فارغ. اذهب لغرفة الإنقاذ لإضافة مهام!")
         st.markdown('</div>', unsafe_allow_html=True)
     
+    # --- المستشار ---
     elif menu == "المستشار":
         st.markdown(f"<h2>🤖 المستشار الذكي</h2>", unsafe_allow_html=True)
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
