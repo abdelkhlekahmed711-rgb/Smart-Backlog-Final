@@ -10,29 +10,28 @@ from streamlit_lottie import st_lottie
 from streamlit_option_menu import option_menu
 
 # ---------------------------------------------------------
-# 1. إعدادات الصفحة الأساسية
+# 1. إعدادات الصفحة
 # ---------------------------------------------------------
 st.set_page_config(page_title="SmartBacklog Pro", page_icon="🎓", layout="wide")
 
-# تهيئة المتغيرات
 if 'theme' not in st.session_state: st.session_state.theme = 'titanium'
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'user' not in st.session_state: st.session_state.user = {}
 
 # ---------------------------------------------------------
-# 2. ألوان التصميم (مضبوطة للموبايل)
+# 2. نظام التصميم (تم ضبط ألوان القوائم للموبايل)
 # ---------------------------------------------------------
 design = {
     'titanium': {
         'sidebar_bg': '#0f172a',
         'glass': 'rgba(15, 23, 42, 0.90)',
         'border': 'rgba(56, 189, 248, 0.5)',
-        'input_bg': '#1e293b',  # خلفية حقل الكتابة (غامق)
-        'input_text': '#ffffff', # لون الكتابة (أبيض)
+        'input_bg': '#1e293b',
+        'input_text': '#ffffff',
         'primary': '#38bdf8',
         'text': '#f8fafc',
         'text_sec': '#94a3b8', 
-        'menu_text': '#ffffff',
+        'menu_text': '#ffffff', # أبيض صريح للقائمة
         'chart_font': '#ffffff',
         'btn_grad': 'linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%)',
         'shadow': '0 0 20px rgba(56, 189, 248, 0.2)',
@@ -45,12 +44,12 @@ design = {
         'sidebar_bg': '#ffffff',
         'glass': 'rgba(255, 255, 255, 0.95)',      
         'border': 'rgba(236, 72, 153, 0.6)',
-        'input_bg': '#ffffff',  # خلفية حقل الكتابة (أبيض)
-        'input_text': '#831843', # لون الكتابة (نبيتي)
+        'input_bg': '#ffffff',
+        'input_text': '#831843',
         'primary': '#be185d',
         'text': '#831843',
         'text_sec': '#9d174d',
-        'menu_text': '#831843',
+        'menu_text': '#831843', # نبيتي غامق للقائمة
         'chart_font': '#831843',
         'btn_grad': 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
         'shadow': '0 10px 25px rgba(236, 72, 153, 0.15)',
@@ -63,10 +62,7 @@ design = {
 
 theme = design[st.session_state.theme]
 
-# ---------------------------------------------------------
-# 3. CSS (بدون إخفاء الشاشة)
-# ---------------------------------------------------------
-# خلفيات متحركة
+# الخلفيات
 bg_css = ""
 if st.session_state.theme == 'titanium':
     bg_css = """
@@ -86,6 +82,7 @@ else:
     @keyframes gradientBG { 0% {background-position:0% 50%} 50% {background-position:100% 50%} 100% {background-position:0% 50%} }
     """
 
+# --- CSS Styling (إصلاحات الموبايل القوية) ---
 st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&family=El+Messiri:wght@500;600;700&display=swap');
@@ -94,29 +91,35 @@ h1, h2, h3, .stMetricLabel {{ font-family: 'El Messiri', sans-serif !important; 
 
 {bg_css}
 
-/* النصوص */
 .stApp, p, span, label, div, .stMarkdown {{ color: {theme['text']} !important; }}
 
-/* === إصلاح الموبايل === */
-/* إظهار الهيدر عشان زرار القائمة يظهر */
+/* === 📱 إصلاح القوائم على الموبايل 📱 === */
+
+/* إجبار لون النصوص داخل القائمة الجانبية */
+[data-testid="stSidebar"] p, 
+[data-testid="stSidebar"] span, 
+[data-testid="stSidebar"] div,
+[data-testid="stSidebarNav"] span {{
+    color: {theme['menu_text']} !important; 
+    font-weight: 600 !important;
+}}
+
+/* إظهار الهيدر وزر القائمة بوضوح */
 header[data-testid="stHeader"] {{
     background: transparent !important;
-    display: block !important;
-    visibility: visible !important;
+    display: block !important; visibility: visible !important;
 }}
-
-/* تنسيق زر القائمة (Hamburger) */
 button[kind="header"] {{
-    color: {theme['primary']} !important;
-    background: transparent !important;
+    color: {theme['primary']} !important; /* لون أيقونة الهامبرغر */
+    background: {theme['input_bg']} !important; /* خلفية بسيطة للأيقونة */
     border: 1px solid {theme['border']} !important;
+    display: block !important; visibility: visible !important;
 }}
 
-/* إخفاء زر الـ Deploy فقط */
-.stDeployButton {{ display: none !important; }}
-[data-testid="stDecoration"] {{ display: none !important; }}
+/* إخفاء العناصر غير الضرورية */
+.stDeployButton, [data-testid="stDecoration"], footer {{ display: none !important; }}
 
-/* === إصلاح حقول الإدخال === */
+/* === حقول الإدخال === */
 .stTextInput input, .stNumberInput input, .stPasswordInput input {{
     background-color: {theme['input_bg']} !important;
     color: {theme['input_text']} !important;
@@ -124,7 +127,6 @@ button[kind="header"] {{
     border-radius: 12px !important;
     padding: 10px !important;
 }}
-/* لون النص الإرشادي */
 ::placeholder {{ color: {theme['text_sec']} !important; opacity: 0.8; }}
 
 /* البطاقات */
@@ -154,7 +156,7 @@ div[data-testid="stDataEditor"] div {{ color: {theme['text']} !important; }}
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 4. البيانات والذكاء الاصطناعي
+# 3. إدارة البيانات
 # ---------------------------------------------------------
 TASKS_DB = 'smart_tasks.csv'
 USERS_DB = 'smart_users.csv'
@@ -162,7 +164,6 @@ USERS_DB = 'smart_users.csv'
 def init_dbs():
     if not os.path.exists(USERS_DB):
         pd.DataFrame([{"username": "admin", "password": "123", "name": "Admin", "role": "admin"}]).to_csv(USERS_DB, index=False)
-    
     if not os.path.exists(TASKS_DB):
         data = {
             "المادة": ["اللغة العربية", "الفيزياء", "الكيمياء", "الأحياء", "الرياضيات", "اللغة الإنجليزية", "التاريخ", "الجغرافيا", "الفلسفة", "علم النفس", "الفيزياء (مراجعة)", "الكيمياء (عضوية)", "نحو وصرف", "تفاضل", "اللغة الفرنسية", "التربية الوطنية", "الإحصاء", "الجيولوجيا", "الأحياء (وراثة)", "قصة الإنجليزي", "ميكانيكا", "استاتيكا", "جبر", "هندسة فراغية", "بلاغة"],
@@ -186,16 +187,44 @@ def load_data(file):
 def save_data(df, file): df.to_csv(file, index=False)
 init_dbs()
 
-# AI Advice
+# --- 🧠 محرك المستشار الذكي (المطور) ---
+motivational_quotes = [
+    "النجاح ليس صدفة، إنه عمل شاق، مثابرة، تعلم، وتضحية.",
+    "لا تؤجل عمل اليوم إلى الغد، فالغد لديه أشغاله أيضاً.",
+    "قمة الجبل لا يصل إليها إلا من تسلق الصخور.",
+    "الفشل هو مجرد فرصة للبدء من جديد بذكاء أكبر.",
+    "كل دقيقة ألم في الدراسة تمنحك سنوات من الراحة في المستقبل.",
+    "صدقني، فرحة النتيجة ستنسيك كل تعب بذلته.",
+    "أنت أقوى مما تتخيل، وأذكى مما تظن.",
+    "الفرق بين المستحيل والممكن يتوقف على عزيمتك."
+]
+
 def get_ai_advice(df):
-    if df.empty: return "جدولك فارغ!"
+    if df.empty: return "جدولك فارغ! هذه فرصة لبداية قوية ومنظمة. أضف موادك الآن. 🚀"
+    
     total = df['الدروس'].sum() + df['المحاضرات'].sum()
     urgent = df[df['الأيام'] <= 5]
-    advice = f"تحليل ذكي: لديك {int(total)} مهمة متراكمة. "
-    if not urgent.empty: advice += f"🔥 انتبه! لديك {len(urgent)} مواد امتحاناتها قريبة."
-    elif total > 20: advice += "⚠️ وضعك يحتاج لجدول مكثف."
-    else: advice += "✅ وضعك مستقر."
+    quote = random.choice(motivational_quotes)
+    
+    # تحليل الحالة
+    advice = ""
+    if total > 25:
+        advice += f"⚠️ **تحليل الوضع:** لديك تراكمات كبيرة ({int(total)} مهمة). لا تقلق، الحل هو التقسيم.\n"
+        advice += "💡 **النصيحة:** ركز على مادة واحدة فقط اليوم، ولا تشتت نفسك. ابدأ بالأسهل لتشعر بالإنجاز."
+    elif total > 10:
+        advice += f"🧐 **تحليل الوضع:** لديك بعض التراكمات المتوسطة ({int(total)} مهمة).\n"
+        advice += "💡 **النصيحة:** خصص ساعتين إضافيتين اليوم وستنتهي من نصفها."
+    else:
+        advice += f"✅ **تحليل الوضع:** وضعك ممتاز! أنت مسيطر تماماً.\n"
+        advice += "💡 **النصيحة:** استغل هذا الوقت في مراجعة قديم أو حل امتحانات شاملة."
+
+    advice += "\n\n"
+    if not urgent.empty: 
+        advice += f"🔥 **تنبيه هام:** لديك {len(urgent)} مواد امتحاناتها قريبة جداً. الأولوية لها الآن!"
+    
+    advice += f"\n\n✨ **حكمة لك:** {quote}"
     return advice
+# ----------------------------------------
 
 @st.cache_data
 def load_lottie(url):
@@ -211,9 +240,8 @@ def login_page():
     c1, c2, c3 = st.columns([1, 1.8, 1])
     with c2:
         st.write("")
-        st.markdown('<div class="glass-card">', unsafe_allow_html=True) # شلنا الـ tilt مؤقتاً لضمان الثبات
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         
-        # زر تبديل الثيم
         col_t, _ = st.columns([1, 3])
         with col_t:
             icon = "🌒" if st.session_state.theme == 'sakura' else "🌸"
@@ -254,7 +282,6 @@ def login_page():
 
 def main_app():
     with st.sidebar:
-        # زر الثيم
         btn_txt = "الوضع النهاري 🌸" if st.session_state.theme == 'titanium' else "الوضع الليلي 🌒"
         if st.button(btn_txt, use_container_width=True):
             st.session_state.theme = 'sakura' if st.session_state.theme == 'titanium' else 'titanium'
