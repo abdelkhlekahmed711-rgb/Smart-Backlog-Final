@@ -23,12 +23,12 @@ if 'user' not in st.session_state: st.session_state.user = {}
 theme = {
     'bg_color': '#020617',           
     'sidebar_bg': '#0f172a',         
-    'glass': 'rgba(30, 41, 59, 0.75)', # زجاج غامق
+    'glass': 'rgba(30, 41, 59, 0.75)',
     'border': 'rgba(56, 189, 248, 0.5)', 
     'primary': '#38bdf8',            
-    'text': '#f8fafc',               # أبيض ناصع
+    'text': '#f8fafc',
     'text_sec': '#94a3b8',           
-    'input_bg': '#1e293b',           # خلفية حقل الكتابة
+    'input_bg': '#1e293b',
     'input_text': '#ffffff',         
     'btn_grad': 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)', 
     'shadow': '0 4px 20px rgba(0, 0, 0, 0.4)', 
@@ -38,7 +38,7 @@ theme = {
 }
 
 # ---------------------------------------------------------
-# 3. CSS (خلفية ثابتة ونظيفة)
+# 3. CSS (تثبيت الألوان)
 # ---------------------------------------------------------
 st.markdown(f"""
 <style>
@@ -46,17 +46,17 @@ st.markdown(f"""
 * {{ font-family: 'Almarai', sans-serif; }}
 h1, h2, h3, .stMetricLabel {{ font-family: 'El Messiri', sans-serif !important; letter-spacing: 0.5px; }}
 
-/* === الخلفية الجديدة (تدرج لوني ناعم وثابت) === */
+/* الخلفية الثابتة */
 .stApp {{
     background: linear-gradient(to bottom, #020617, #0f172a) !important;
     background-attachment: fixed !important;
 }}
 
-/* توحيد لون النصوص */
+/* النصوص */
 .stApp, p, span, label, div, .stMarkdown, h1, h2, h3, h4, h5, h6 {{ color: {theme['text']} !important; }}
 .small-text {{ color: {theme['text_sec']} !important; font-size: 0.85rem; }}
 
-/* === 📱 تحسينات الموبايل 📱 === */
+/* === 📱 الموبايل والقوائم 📱 === */
 header[data-testid="stHeader"] {{
     background: transparent !important;
     display: block !important; visibility: visible !important;
@@ -69,17 +69,19 @@ button[kind="header"] {{
     border-radius: 8px !important;
 }}
 
-/* إخفاء العناصر الزائدة */
 .stDeployButton, [data-testid="stDecoration"], footer {{ display: none !important; }}
 
-/* القائمة الجانبية */
+/* القائمة الجانبية (تثبيت اللون الغامق) */
 section[data-testid="stSidebar"] {{
     background-color: {theme['sidebar_bg']} !important;
     border-right: 1px solid {theme['border']};
 }}
-[data-testid="stSidebar"] * {{ color: {theme['text']} !important; }}
+/* إجبار نصوص القائمة الجانبية أن تكون بيضاء */
+section[data-testid="stSidebar"] span {{
+    color: #ffffff !important;
+}}
 
-/* === 🔧 حقول الإدخال (واضحة جداً) === */
+/* === 🔧 حقول الإدخال === */
 .stTextInput input, .stNumberInput input, .stPasswordInput input {{
     background-color: {theme['input_bg']} !important;
     color: {theme['input_text']} !important;
@@ -90,7 +92,7 @@ section[data-testid="stSidebar"] {{
 }}
 ::placeholder {{ color: {theme['text_sec']} !important; opacity: 0.7; }}
 
-/* البطاقات الزجاجية */
+/* البطاقات */
 .glass-card {{
     background: {theme['glass']};
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -104,12 +106,6 @@ div.stButton > button {{
     background: {theme['btn_grad']}; color: white !important;
     border: none; padding: 12px 24px; border-radius: 15px;
     font-weight: bold; width: 100%; transition: 0.3s;
-}}
-div.stButton > button:hover {{ transform: scale(1.02); box-shadow: 0 0 15px {theme['primary']}; }}
-
-/* الجداول */
-div[data-testid="stDataEditor"] {{
-    border: 1px solid {theme['border']}; border-radius: 15px;
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -146,20 +142,16 @@ def load_data(file):
 def save_data(df, file): df.to_csv(file, index=False)
 init_dbs()
 
-# --- الذكاء الاصطناعي ---
-motivational_quotes = [
-    "النجاح ليس صدفة، إنه عمل شاق.", "لا تؤجل عمل اليوم إلى الغد.",
-    "قمة الجبل لا يصل إليها إلا من تسلق الصخور.", "أنت أقوى مما تتخيل."
-]
+# AI Advice
+motivational_quotes = ["النجاح ليس صدفة.", "لا تؤجل عمل اليوم.", "قمة الجبل تحتاج تسلق.", "أنت أقوى مما تتخيل."]
 def get_ai_advice(df):
     if df.empty: return "جدولك فارغ! ابدأ الآن. 🚀"
     total = df['الدروس'].sum() + df['المحاضرات'].sum()
     urgent = df[df['الأيام'] <= 5]
     quote = random.choice(motivational_quotes)
-    
     advice = f"📊 **تحليل:** لديك {int(total)} مهمة.\n"
     if total > 20: advice += "⚡ **نصيحة:** التراكمات كثيرة، ركز على مادة واحدة اليوم."
-    else: advice += "✅ **نصيحة:** وضعك مستقر، استمر."
+    else: advice += "✅ **نصيحة:** وضعك مستقر."
     if not urgent.empty: advice += f"\n🔥 **تنبيه:** {len(urgent)} امتحانات قريبة!"
     advice += f"\n\n✨ **حكمة:** {quote}"
     return advice
@@ -221,13 +213,16 @@ def main_app():
         </div>
         """, unsafe_allow_html=True)
 
+        # 🔧 هنا الإصلاح الحاسم للقائمة (ألوان محددة) 🔧
         menu = option_menu("القائمة", ["لوحة التحكم", "إضافة مهام", "الجدول الذكي", "المستشار"], 
-            icons=['speedometer', 'plus-square', 'table', 'robot'], menu_icon="cast", default_index=0,
+            icons=['speedometer', 'plus-square', 'table', 'robot'], 
+            menu_icon="cast", 
+            default_index=0,
             styles={
-                "container": {"padding": "0!important", "background-color": "transparent"}, 
-                "icon": {"color": theme['primary'], "font-size": "18px"}, 
-                "nav-link": {"font-size": "16px", "text-align": "right", "color": theme['text'], "margin":"5px"},
-                "nav-link-selected": {"background-color": theme['primary'], "color": "#fff"},
+                "container": {"padding": "5px", "background-color": "#0f172a"}, # لون خلفية القائمة كحلي
+                "icon": {"color": "#38bdf8", "font-size": "18px"}, 
+                "nav-link": {"font-size": "16px", "text-align": "right", "color": "white", "margin":"5px"}, # إجبار النص أبيض
+                "nav-link-selected": {"background-color": "#38bdf8", "color": "white"},
             })
         
         st.markdown("---")
