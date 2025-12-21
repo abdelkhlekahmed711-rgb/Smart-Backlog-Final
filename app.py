@@ -40,19 +40,16 @@ st.markdown(f"""
 * {{ font-family: 'Almarai', sans-serif; }}
 h1, h2, h3, .stMetricLabel {{ font-family: 'El Messiri', sans-serif !important; }}
 
-/* 1. إجبار الخلفية تكون كحلي */
 .stApp {{
     background-color: {colors['bg']} !important;
     background-image: radial-gradient(#38bdf820 1px, transparent 1px);
     background-size: 30px 30px;
 }}
 
-/* 2. إجبار النصوص تكون بيضاء */
 p, span, label, div, h1, h2, h3, h4, h5, h6, .stMarkdown {{
     color: {colors['text']} !important;
 }}
 
-/* 3. إصلاح حقول الإدخال */
 input, textarea, select {{
     background-color: {colors['input_bg']} !important;
     color: white !important;
@@ -61,7 +58,6 @@ input, textarea, select {{
     border: 1px solid {colors['border']} !important;
 }}
 
-/* 4. تنسيق الجدول */
 [data-testid="stDataEditor"] {{
     border: 1px solid {colors['border']};
     border-radius: 10px;
@@ -72,13 +68,11 @@ input, textarea, select {{
     background-color: {colors['card_bg']} !important;
 }}
 
-/* 5. القائمة الجانبية */
 section[data-testid="stSidebar"] {{
     background-color: {colors['card_bg']} !important;
     border-right: 1px solid {colors['border']};
 }}
 
-/* 6. إصلاح زر القائمة */
 header[data-testid="stHeader"] {{
     background: transparent !important;
     display: block !important; visibility: visible !important;
@@ -93,7 +87,6 @@ button[kind="header"] {{
 
 .stDeployButton, [data-testid="stDecoration"], footer {{ display: none !important; }}
 
-/* البطاقات */
 .glass-card {{
     background: rgba(15, 23, 42, 0.85);
     backdrop-filter: blur(10px);
@@ -102,7 +95,6 @@ button[kind="header"] {{
     padding: 20px; margin-bottom: 20px;
 }}
 
-/* الأزرار */
 div.stButton > button {{
     background: linear-gradient(90deg, #0ea5e9, #2563eb);
     color: white !important; border: none;
@@ -113,7 +105,7 @@ div.stButton > button {{
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 4. البيانات
+# 4. البيانات (مع إصلاح الخطأ)
 # ---------------------------------------------------------
 TASKS_DB = 'smart_tasks.csv'
 USERS_DB = 'smart_users.csv'
@@ -122,7 +114,6 @@ def init_dbs():
     if not os.path.exists(USERS_DB):
         pd.DataFrame([{"username": "admin", "password": "123", "name": "Admin", "role": "admin"}]).to_csv(USERS_DB, index=False)
     if not os.path.exists(TASKS_DB):
-        # تم تحديث الهيكل ليشمل تاريخ التنفيذ
         data = {
             "إنجاز": [False],
             "المادة": ["مثال: فيزياء"],
@@ -131,23 +122,35 @@ def init_dbs():
             "الصعوبة": [5],
             "الأيام": [10],
             "الأولوية": [5.0],
-            "تاريخ_التنفيذ": [str(date.today())], # عمود جديد للجدولة
+            "تاريخ_التنفيذ": [str(date.today())],
             "الطالب": ["admin"]
         }
         df = pd.DataFrame(data)
         df.to_csv(TASKS_DB, index=False)
 
 def load_data(file): 
+    # قراءة كل شيء كنص أولاً لتجنب الأخطاء
     df = pd.read_csv(file, dtype=str)
+    
     if file == TASKS_DB:
+        # 1. التأكد من وجود الأعمدة
         if 'إنجاز' not in df.columns: df.insert(0, 'إنجاز', 'False')
-        if 'تاريخ_التنفيذ' not in df.columns: df['تاريخ_التنفيذ'] = str(date.today()) # حماية من الأخطاء القديمة
+        if 'تاريخ_التنفيذ' not in df.columns: df['تاريخ_التنفيذ'] = str(date.today())
         
-        # تحويل الأعمدة الرقمية
+        # 2. تحويل الأرقام
         for c in ['الدروس', 'المحاضرات', 'الأولوية', 'الصعوبة', 'الأيام']:
             df[c] = pd.to_numeric(df[c], errors='coerce').fillna(0)
             
+        # 3. تحويل Boolean
         df['إنجاز'] = df['إنجاز'].map({'True': True, 'False': False, True: True, False: False, 'TRUE': True, 'FALSE': False})
+        
+        # 4. (الحل الجذري) تحويل التاريخ من نص إلى كائن تاريخ
+        df['تاريخ_التنفيذ'] = pd.to_datetime(df['تاريخ_التنفيذ'], errors='coerce').dt.date
+        
+        # ملء أي تواريخ فارغة بتاريخ اليوم
+        mask = df['تاريخ_التنفيذ'].isna()
+        df.loc[mask, 'تاريخ_التنفيذ'] = date.today()
+
     return df
 
 def save_data(df, file): df.to_csv(file, index=False)
@@ -174,7 +177,7 @@ def load_lottie(url):
     except: return None
 
 # ---------------------------------------------------------
-# 5. منطق الموزع الذكي (الجديد)
+# 5. منطق الموزع الذكي
 # ---------------------------------------------------------
 def distribute_backlog(df, subject, amount, deadline, username):
     start_date = date.today()
@@ -192,16 +195,15 @@ def distribute_backlog(df, subject, amount, deadline, username):
         
         for _ in range(daily_quota):
             if current_unit <= amount:
-                # إنشاء صف جديد للمهمة
                 new_row = {
                     "إنجاز": False,
                     "المادة": f"{subject} - جزء {current_unit} (إنقاذ)",
-                    "الدروس": 1, # نعتبر كل جزء درس واحد
+                    "الدروس": 1,
                     "المحاضرات": 0,
-                    "الصعوبة": 10, # أولوية قصوى لأنها إنقاذ
-                    "الأيام": (deadline - current_day_date).days, # الأيام المتبقية حتى الديدلاين
-                    "الأولوية": 100.0, # رقم عالي جداً لتظهر في الأول
-                    "تاريخ_التنفيذ": str(current_day_date),
+                    "الصعوبة": 10,
+                    "الأيام": (deadline - current_day_date).days,
+                    "الأولوية": 100.0,
+                    "تاريخ_التنفيذ": current_day_date, # نمرر كائن تاريخ وليس نص
                     "الطالب": username
                 }
                 new_rows.append(new_row)
@@ -211,6 +213,7 @@ def distribute_backlog(df, subject, amount, deadline, username):
                 
     if new_rows:
         new_df = pd.DataFrame(new_rows)
+        # التأكد من توافق الأنواع قبل الدمج
         updated_df = pd.concat([df, new_df], ignore_index=True)
         return updated_df, True, f"تم إضافة {current_unit-1} مهمة لجدولك بنجاح!"
     return df, False, "لم يتم إضافة مهام."
@@ -308,7 +311,7 @@ def main_app():
                     st.plotly_chart(fig2, use_container_width=True)
         else: st.info("لا توجد بيانات.")
 
-    # --- غرفة الإنقاذ (الجديدة) ---
+    # --- غرفة الإنقاذ ---
     elif menu == "غرفة الإنقاذ":
         st.markdown(f"<h2>🚑 غرفة الإنقاذ وتفتيت التراكمات</h2>", unsafe_allow_html=True)
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
@@ -321,23 +324,22 @@ def main_app():
                 amt = st.number_input("كم درس/محاضرة متراكمة؟", min_value=1, value=5)
             with col2:
                 d_date = st.date_input("موعد الانتهاء النهائي (الديدلاين)", min_value=date.today() + timedelta(days=1))
-                st.write("") # Spacer
+                st.write("") 
                 st.write("") 
             
             submit_rescue = st.form_submit_button("🚀 فتت التراكمات ووزعها في جدولي")
         
         if submit_rescue:
             if subj:
-                # استخدام قاعدة البيانات المحملة حالياً للتحديث
                 updated_tasks, success, msg = distribute_backlog(
-                    tasks, # نرسل قاعدة البيانات الأصلية الكاملة
+                    tasks, 
                     subj, 
                     amt, 
                     d_date, 
                     st.session_state.user['username']
                 )
                 if success:
-                    save_data(updated_tasks, TASKS_DB) # الحفظ الفعلي
+                    save_data(updated_tasks, TASKS_DB)
                     st.balloons()
                     st.success(msg)
                     time.sleep(2)
@@ -354,7 +356,6 @@ def main_app():
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         
         if not my_tasks.empty:
-            # ترتيب حسب الأولوية وتاريخ التنفيذ
             my_tasks = my_tasks.sort_values(by=["إنجاز", "تاريخ_التنفيذ", "الأولوية"], ascending=[True, True, False])
             
             edited_df = st.data_editor(
@@ -369,28 +370,17 @@ def main_app():
                     "الدروس": st.column_config.NumberColumn("وحدات", format="%d"),
                 },
                 disabled=["الطالب"],
-                column_order=["إنجاز", "المادة", "تاريخ_التنفيذ", "الأولوية", "الصعوبة", "الدروس"], # ترتيب الأعمدة للعرض
+                column_order=["إنجاز", "المادة", "تاريخ_التنفيذ", "الأولوية", "الصعوبة", "الدروس"],
                 hide_index=True,
                 use_container_width=True,
                 num_rows="dynamic"
             )
             if st.button("💾 حفظ التعديلات"):
-                # دمج التعديلات مع قاعدة البيانات الأصلية (في حالة الأدمن يرى الكل)
                 if st.session_state.user['role'] == 'admin':
                     save_data(edited_df, TASKS_DB)
                 else:
-                    # تحديث فقط صفوف الطالب الحالي في قاعدة البيانات الرئيسية
-                    # هذه خطوة متقدمة قليلاً لضمان عدم حذف بيانات الآخرين
-                    # للتبسيط هنا سنفترض أن الملف يحمل ويحفظ بالكامل، 
-                    # ولكن في التطبيق الحقيقي يجب دمج البيانات بعناية.
-                    # هنا سنقوم بحفظ التعديلات على الملف مباشرة لأننا قمنا بفلترة العرض فقط
-                    # ولكن للحفظ الصحيح يجب تحديث السطور الخاصة بالطالب فقط في الملف الأصلي
-                    
-                    # الحل البسيط والفعال هنا:
                     final_df = load_data(TASKS_DB)
-                    # حذف بيانات الطالب القديمة
                     final_df = final_df[final_df['الطالب'] != st.session_state.user['username']]
-                    # إضافة البيانات الجديدة المعدلة
                     final_df = pd.concat([final_df, edited_df], ignore_index=True)
                     save_data(final_df, TASKS_DB)
 
