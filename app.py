@@ -6,7 +6,7 @@ import requests
 import time
 import random
 import math
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 import streamlit.components.v1 as components
 from streamlit_lottie import st_lottie
 from streamlit_option_menu import option_menu
@@ -22,7 +22,7 @@ if 'messages' not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": "أهلاً يا بطل! أنا المستشار الأكاديمي. جاهز نكسر التراكمات؟"}]
 
 # ---------------------------------------------------------
-# 2. التصميم (CSS)
+# 2. التصميم (CSS) - النسخة الماسية
 # ---------------------------------------------------------
 colors = {
     'bg_dark': '#0f172a',
@@ -94,15 +94,12 @@ div.stButton > button {{
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 3. شريط التقدم
+# 3. الدوال المساعدة
 # ---------------------------------------------------------
 def render_custom_progress_bar(percentage):
-    if percentage < 30:
-        bar_color, emoji = "#ef4444", "😟"
-    elif percentage < 70:
-        bar_color, emoji = "#eab308", "😐"
-    else:
-        bar_color, emoji = "#22c55e", "🤩"
+    if percentage < 30: bar_color, emoji = "#ef4444", "😟"
+    elif percentage < 70: bar_color, emoji = "#eab308", "😐"
+    else: bar_color, emoji = "#22c55e", "🤩"
     
     st.markdown(f"""
     <div style="margin-bottom: 20px;">
@@ -133,10 +130,8 @@ def init_dbs():
         pd.DataFrame(data).to_csv(TASKS_DB, index=False)
 
 def load_data(file): 
-    try:
-        df = pd.read_csv(file, dtype=str)
-    except:
-        return pd.DataFrame()
+    try: df = pd.read_csv(file, dtype=str)
+    except: return pd.DataFrame()
 
     if file == TASKS_DB:
         cols = ['إنجاز', 'المادة', 'الدروس', 'المحاضرات', 'الصعوبة', 'الأيام', 'الأولوية', 'تاريخ_التنفيذ', 'الطالب']
@@ -164,7 +159,7 @@ def load_lottie(url):
     except: return None
 
 # ---------------------------------------------------------
-# 5. منطق التطبيق
+# 5. المنطق والذكاء
 # ---------------------------------------------------------
 def distribute_backlog(df, subject, amount, deadline, username):
     start_date = date.today()
@@ -201,15 +196,10 @@ def login_page():
     c1, c2, c3 = st.columns([1, 1.8, 1])
     with c2:
         st.write("")
-        st.markdown('<div class="glass-card" style="text-align:center;"><h1>SmartBacklog</h1><p>Pro Edition</p></div>', unsafe_allow_html=True)
-        
-        # --- ✅ إضافة رسالة بيانات الدخول ---
-        st.info("🔐 **بيانات الدخول الافتراضية:**\n\n**المستخدم:** `admin`\n**كلمة السر:** `123`")
-        # --------------------------------
-        
+        st.markdown('<div class="glass-card" style="text-align:center;"><h1>SmartBacklog</h1><p>Diamond Edition</p></div>', unsafe_allow_html=True)
+        st.info("🔐 **بيانات الدخول:** `admin` | `123`")
         if lottie := load_lottie("https://lottie.host/94875632-7605-473d-8065-594ea470b355/9Z53657123.json"):
             st_lottie(lottie, height=150, key="welcome")
-            
         u = st.text_input("اسم المستخدم", placeholder="admin")
         p = st.text_input("كلمة المرور", type="password", placeholder="123")
         if st.button("دخول 🚀"):
@@ -222,6 +212,9 @@ def login_page():
             else: st.error("خطأ في البيانات")
 
 def main_app():
+    tasks = load_data(TASKS_DB)
+    my_tasks = tasks if st.session_state.user['role'] == 'admin' else tasks[tasks['الطالب'] == st.session_state.user['username']]
+
     with st.sidebar:
         st.markdown(f"<h3 style='text-align:center; color:#38bdf8 !important;'>{st.session_state.user['name']}</h3>", unsafe_allow_html=True)
         
@@ -239,12 +232,33 @@ def main_app():
         )
         
         st.write("---")
+        
+        # --- 🆕 لمسة 3: مؤقت بومودورو (Focus) ---
+        with st.expander("⏱️ وضع التركيز (Pomodoro)"):
+            st.caption("ذاكر بتركيز لمدة 25 دقيقة")
+            if st.button("ابدأ المؤقت 🚀"):
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                for i in range(25): # محاكاة سريعة، يمكن جعلها 25*60 للوقت الحقيقي
+                    status_text.markdown(f"⏳ **باقي {25-i} دقيقة... ركز!**")
+                    progress_bar.progress((i+1)/25)
+                    time.sleep(0.1) # سرعنا الوقت للتجربة (اجعلها 60 للدقيقة الحقيقية)
+                st.success("🎉 عاش! خذ استراحة.")
+                st.balloons()
+        
+        # --- 🆕 لمسة 2: تصدير البيانات (Export) ---
+        csv = my_tasks.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📥 تحميل الجدول (Excel/CSV)",
+            data=csv,
+            file_name='my_study_plan.csv',
+            mime='text/csv',
+        )
+
+        st.write("---")
         if st.button("خروج"):
             st.session_state.logged_in = False
             st.rerun()
-
-    tasks = load_data(TASKS_DB)
-    my_tasks = tasks if st.session_state.user['role'] == 'admin' else tasks[tasks['الطالب'] == st.session_state.user['username']]
 
     # --- Dashboard ---
     if selected == "لوحة التحكم":
@@ -254,54 +268,35 @@ def main_app():
             total = len(my_tasks)
             pct = (done/total*100) if total > 0 else 0
             
-            # شريط التقدم
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
             render_custom_progress_bar(pct)
             st.markdown('</div>', unsafe_allow_html=True)
             
-            # العدادات
             c1, c2 = st.columns(2)
             c1.metric("المتبقي", total - done)
             c2.metric("تم إنجازه", done)
             
             st.write("---")
-            
-            # الرسوم البيانية
             g1, g2 = st.columns(2)
             pending = my_tasks[my_tasks['إنجاز'] == False]
             
             with g1:
                 if not pending.empty:
                     st.markdown("##### 🔥 المهام الأكثر إلحاحاً")
-                    fig_bar = px.bar(
-                        pending.head(7), 
-                        x='المادة', 
-                        y='الأولوية', 
-                        color='الأولوية',
-                        template='plotly_dark',
-                        color_continuous_scale='Bluyl'
-                    )
+                    fig_bar = px.bar(pending.head(7), x='المادة', y='الأولوية', color='الأولوية', template='plotly_dark', color_continuous_scale='Bluyl')
                     fig_bar.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'color':'white'})
                     st.plotly_chart(fig_bar, use_container_width=True)
-                else: st.info("لا توجد مهام معلقة!")
+                else: st.info("عاش! خلصت كل المهام.")
 
             with g2:
                 if not pending.empty:
-                    st.markdown("##### 🍰 توزيع الحمل الدراسي")
+                    st.markdown("##### 🍰 توزيع الحمل")
                     pie_data = pending['المادة'].value_counts().reset_index()
                     pie_data.columns = ['المادة', 'العدد']
-                    fig_pie = px.pie(
-                        pie_data, 
-                        values='العدد', 
-                        names='المادة', 
-                        hole=0.5, 
-                        template='plotly_dark',
-                        color_discrete_sequence=px.colors.sequential.RdBu
-                    )
+                    fig_pie = px.pie(pie_data, values='العدد', names='المادة', hole=0.5, template='plotly_dark', color_discrete_sequence=px.colors.sequential.RdBu)
                     fig_pie.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'color':'white'})
                     st.plotly_chart(fig_pie, use_container_width=True)
-                else: st.info("أضف مواد لرؤية التحليل.")
-                    
+                else: st.info("أضف مواد جديدة.")
         else: st.info("ابدأ بإضافة مهام من غرفة الإنقاذ!")
 
     # --- Rescue ---
@@ -327,9 +322,29 @@ def main_app():
     elif selected == "الجدول اليومي":
         st.markdown("<h2>🗓️ مهام اليوم</h2>", unsafe_allow_html=True)
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        
+        # --- 🆕 لمسة 1: زر التنظيف ---
+        col_clean, col_space = st.columns([1, 4])
+        with col_clean:
+            if st.button("🧹 تنظيف المنجز"):
+                # حذف المهام المنجزة الخاصة بالمستخدم الحالي فقط
+                if st.session_state.user['role'] == 'admin':
+                    # للأدمن: حذف كل المنجز
+                    new_tasks = tasks[tasks['إنجاز'] == False]
+                else:
+                    # للمستخدم: حذف منجزه هو فقط، وترك مهام الآخرين
+                    user_tasks_kept = my_tasks[my_tasks['إنجاز'] == False]
+                    other_users_tasks = tasks[tasks['الطالب'] != st.session_state.user['username']]
+                    new_tasks = pd.concat([other_users_tasks, user_tasks_kept], ignore_index=True)
+                
+                save_data(new_tasks, TASKS_DB)
+                st.toast("تم تنظيف الجدول! 🧹", icon="✨")
+                time.sleep(1)
+                st.rerun()
+        # -----------------------------
+
         if not my_tasks.empty:
             my_tasks = my_tasks.sort_values(by=['إنجاز', 'تاريخ_التنفيذ'], ascending=[True, True])
-            
             edited = st.data_editor(
                 my_tasks,
                 column_config={
