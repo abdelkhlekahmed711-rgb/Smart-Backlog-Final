@@ -22,7 +22,7 @@ if 'messages' not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": "أهلاً يا بطل! أنا المستشار الأكاديمي. جاهز نكسر التراكمات؟"}]
 
 # ---------------------------------------------------------
-# 2. التصميم (CSS) - إصلاح الألوان والخطوط للموبايل
+# 2. التصميم (CSS)
 # ---------------------------------------------------------
 colors = {
     'bg_dark': '#0f172a',
@@ -36,7 +36,6 @@ st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=El+Messiri:wght@400;500;600;700&display=swap');
 
-/* خلفية متحركة هادئة */
 @keyframes gradientBG {{
     0% {{ background-position: 0% 50%; }}
     50% {{ background-position: 100% 50%; }}
@@ -48,7 +47,6 @@ st.markdown(f"""
     animation: gradientBG 15s ease infinite;
 }}
 
-/* تعميم الخطوط البيضاء */
 * {{ font-family: 'Almarai', sans-serif; }}
 h1, h2, h3, h4, h5, h6, .stMetricLabel {{ 
     font-family: 'El Messiri', sans-serif !important; 
@@ -56,13 +54,11 @@ h1, h2, h3, h4, h5, h6, .stMetricLabel {{
 }}
 p, span, label, div, .stMarkdown {{ color: #e2e8f0 !important; }}
 
-/* القائمة الجانبية */
 section[data-testid="stSidebar"] {{
     background-color: rgba(15, 23, 42, 0.98) !important;
     border-right: 1px solid {colors['border']};
 }}
 
-/* إصلاح حقول الإدخال لتكون واضحة */
 input, textarea, select, .stTextInput > div > div > input, .stSelectbox > div > div > div {{
     background-color: {colors['input_bg']} !important;
     color: white !important;
@@ -70,21 +66,16 @@ input, textarea, select, .stTextInput > div > div > input, .stSelectbox > div > 
 }}
 .stDateInput > div > div > input {{ color: white !important; }}
 
-/* تصميم الجدول */
 [data-testid="stDataEditor"] {{
     border: 1px solid {colors['border']};
     border-radius: 10px;
     background-color: {colors['input_bg']} !important;
 }}
 
-/* تصميم الرسائل */
 .stChatMessage {{ background-color: rgba(30, 41, 59, 0.8) !important; border-radius: 15px; border: 1px solid {colors['border']}; }}
-
-/* إخفاء عناصر Streamlit الافتراضية */
 header[data-testid="stHeader"] {{ background: transparent !important; }}
 .stDeployButton, [data-testid="stDecoration"], footer {{ display: none !important; }}
 
-/* الأزرار */
 div.stButton > button {{
     background: linear-gradient(90deg, #0ea5e9, #2563eb);
     color: white !important; border: none;
@@ -92,7 +83,6 @@ div.stButton > button {{
     font-weight: bold; width: 100%;
 }}
 
-/* البطاقات الزجاجية */
 .glass-card {{
     background: rgba(30, 41, 59, 0.6);
     backdrop-filter: blur(10px);
@@ -127,7 +117,7 @@ def render_custom_progress_bar(percentage):
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 4. البيانات (مع إصلاح الانهيار Crash Fix)
+# 4. البيانات
 # ---------------------------------------------------------
 TASKS_DB = 'smart_tasks.csv'
 USERS_DB = 'smart_users.csv'
@@ -143,27 +133,22 @@ def init_dbs():
         pd.DataFrame(data).to_csv(TASKS_DB, index=False)
 
 def load_data(file): 
-    # قراءة الملف كنص لتجنب الأخطاء
     try:
         df = pd.read_csv(file, dtype=str)
     except:
-        return pd.DataFrame() # إرجاع جدول فارغ عند الخطأ
+        return pd.DataFrame()
 
     if file == TASKS_DB:
-        # 1. التأكد من الأعمدة
         cols = ['إنجاز', 'المادة', 'الدروس', 'المحاضرات', 'الصعوبة', 'الأيام', 'الأولوية', 'تاريخ_التنفيذ', 'الطالب']
         for c in cols:
             if c not in df.columns: df[c] = '0' if c not in ['المادة', 'الطالب', 'تاريخ_التنفيذ'] else ''
             
-        # 2. تنظيف التواريخ (الحماية من الانهيار)
         df['تاريخ_التنفيذ'] = pd.to_datetime(df['تاريخ_التنفيذ'], errors='coerce').dt.date
         df.loc[df['تاريخ_التنفيذ'].isna(), 'تاريخ_التنفيذ'] = date.today()
         
-        # 3. تحويل الأرقام
         for c in ['الدروس', 'المحاضرات', 'الأولوية', 'الصعوبة', 'الأيام']:
             df[c] = pd.to_numeric(df[c], errors='coerce').fillna(0)
             
-        # 4. تحويل الـ Checkbox
         df['إنجاز'] = df['إنجاز'].map({'True': True, 'False': False, True: True, False: False}).fillna(False)
 
     return df
@@ -235,7 +220,6 @@ def main_app():
     with st.sidebar:
         st.markdown(f"<h3 style='text-align:center; color:#38bdf8 !important;'>{st.session_state.user['name']}</h3>", unsafe_allow_html=True)
         
-        # --- إصلاح القائمة (اللون الغامق والخط الأبيض) ---
         selected = option_menu(
             "القائمة الرئيسية",
             ["لوحة التحكم", "غرفة الإنقاذ", "الجدول اليومي", "المستشار الذكي"], 
@@ -257,7 +241,7 @@ def main_app():
     tasks = load_data(TASKS_DB)
     my_tasks = tasks if st.session_state.user['role'] == 'admin' else tasks[tasks['الطالب'] == st.session_state.user['username']]
 
-    # --- Dashboard ---
+    # --- Dashboard (تمت إعادة الرسوم البيانية) ---
     if selected == "لوحة التحكم":
         st.markdown("<h2>📊 لوحة الإنجاز</h2>", unsafe_allow_html=True)
         if not my_tasks.empty:
@@ -265,19 +249,61 @@ def main_app():
             total = len(my_tasks)
             pct = (done/total*100) if total > 0 else 0
             
+            # شريط التقدم
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
             render_custom_progress_bar(pct)
             st.markdown('</div>', unsafe_allow_html=True)
             
+            # العدادات
             c1, c2 = st.columns(2)
             c1.metric("المتبقي", total - done)
             c2.metric("تم إنجازه", done)
             
+            st.write("---")
+            
+            # --- منطقة الرسوم البيانية (Charts Area) ---
+            g1, g2 = st.columns(2)
+            
             pending = my_tasks[my_tasks['إنجاز'] == False]
-            if not pending.empty:
-                fig = px.bar(pending.head(7), x='المادة', y='الأولوية', title="أهم المهام", template='plotly_dark')
-                fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'color':'white'})
-                st.plotly_chart(fig, use_container_width=True)
+            
+            # 1. Bar Chart (الأولويات)
+            with g1:
+                if not pending.empty:
+                    st.markdown("##### 🔥 المهام الأكثر إلحاحاً")
+                    fig_bar = px.bar(
+                        pending.head(7), 
+                        x='المادة', 
+                        y='الأولوية', 
+                        color='الأولوية',
+                        template='plotly_dark',
+                        color_continuous_scale='Bluyl'
+                    )
+                    fig_bar.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'color':'white'})
+                    st.plotly_chart(fig_bar, use_container_width=True)
+                else:
+                    st.info("لا توجد مهام معلقة!")
+
+            # 2. Pie Chart (دائرة البيانات)
+            with g2:
+                if not pending.empty:
+                    st.markdown("##### 🍰 توزيع الحمل الدراسي")
+                    # تجميع البيانات للدائرة
+                    pie_data = pending['المادة'].value_counts().reset_index()
+                    pie_data.columns = ['المادة', 'العدد']
+                    
+                    fig_pie = px.pie(
+                        pie_data, 
+                        values='العدد', 
+                        names='المادة', 
+                        hole=0.5, 
+                        template='plotly_dark',
+                        color_discrete_sequence=px.colors.sequential.RdBu
+                    )
+                    fig_pie.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'color':'white'})
+                    st.plotly_chart(fig_pie, use_container_width=True)
+                else:
+                    st.info("أضف مواد لرؤية التحليل.")
+                    
         else: st.info("ابدأ بإضافة مهام من غرفة الإنقاذ!")
 
     # --- Rescue ---
@@ -304,7 +330,6 @@ def main_app():
         st.markdown("<h2>🗓️ مهام اليوم</h2>", unsafe_allow_html=True)
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         if not my_tasks.empty:
-            # فرز حسب التاريخ ثم الأولوية
             my_tasks = my_tasks.sort_values(by=['إنجاز', 'تاريخ_التنفيذ'], ascending=[True, True])
             
             edited = st.data_editor(
