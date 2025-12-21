@@ -19,28 +19,33 @@ if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'user' not in st.session_state: st.session_state.user = {}
 
 # ---------------------------------------------------------
-# 2. نظام التصميم (الألوان المستقرة V34)
+# 2. نظام التصميم (تم ضبط ألوان الحقول للموبايل)
 # ---------------------------------------------------------
 design = {
     'titanium': {
-        'sidebar_bg': 'rgba(10, 15, 30, 0.95)',
-        'glass': 'rgba(15, 23, 42, 0.80)',
-        'border': 'rgba(56, 189, 248, 0.3)',
+        'sidebar_bg': 'rgba(10, 15, 30, 0.98)', # خلفية القائمة أغمق
+        'glass': 'rgba(15, 23, 42, 0.90)',
+        'border': 'rgba(56, 189, 248, 0.5)',
+        'input_bg': '#1e293b', # خلفية الحقل (كحلي غامق) ليس شفافاً
+        'input_text': '#ffffff', # لون نص الكتابة (أبيض)
         'primary': '#38bdf8',
         'text': '#f8fafc',
         'text_sec': '#cbd5e1', 
         'menu_text': '#ffffff',
         'chart_font': '#ffffff',
         'btn_grad': 'linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%)',
-        'shadow': '0 0 15px rgba(56, 189, 248, 0.15)',
+        'shadow': '0 0 15px rgba(56, 189, 248, 0.2)',
         'lottie_welcome': "https://lottie.host/94875632-7605-473d-8065-594ea470b355/9Z53657123.json",
         'lottie_wait': "https://lottie.host/5a709b1f-d748-4b7d-949f-50a84e27771c/9qj8M4Zz2X.json",
-        'chart_template': 'plotly_dark'
+        'chart_template': 'plotly_dark',
+        'ai_icon': '🤖'
     },
     'sakura': {
-        'sidebar_bg': 'rgba(255, 255, 255, 0.95)', 
-        'glass': 'rgba(255, 255, 255, 0.90)',      
-        'border': 'rgba(244, 114, 182, 0.5)',
+        'sidebar_bg': 'rgba(255, 255, 255, 0.98)', 
+        'glass': 'rgba(255, 255, 255, 0.95)',      
+        'border': 'rgba(236, 72, 153, 0.6)',
+        'input_bg': '#ffffff', # خلفية الحقل (أبيض صريح)
+        'input_text': '#831843', # لون نص الكتابة (نبيتي)
         'primary': '#be185d',
         'text': '#831843',
         'text_sec': '#9d174d',
@@ -50,43 +55,46 @@ design = {
         'shadow': '0 10px 25px rgba(236, 72, 153, 0.15)',
         'lottie_welcome': "https://lottie.host/c750516b-4566-4148-89c0-8260a927054f/1I3k9s6X6q.json",
         'lottie_wait': "https://lottie.host/d2d9c049-14a5-4303-9dcd-e06915354972/uOqD6lB0qW.json",
-        'chart_template': 'plotly_white'
+        'chart_template': 'plotly_white',
+        'ai_icon': '🧠'
     }
 }
 
 theme = design[st.session_state.theme]
 
-# الخلفيات (المستقرة)
+# الخلفيات
 bg_css = ""
 if st.session_state.theme == 'titanium':
     bg_css = """
     .stApp {
         background-color: #020617 !important;
         background-image: 
-            radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.15) 0%, transparent 60%),
             radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
-            radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
-            radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px) !important;
-        background-size: 100% 100%, 550px 550px, 350px 350px, 250px 250px !important;
-        animation: stars 30s linear infinite;
+            radial-gradient(white, rgba(255,255,255,.1) 1px, transparent 30px) !important;
+        background-size: 100% 100%, 450px 450px, 250px 250px !important;
+        animation: starsMove 40s linear infinite;
     }
-    @keyframes stars {
+    @keyframes starsMove {
         0% { background-position: center, 0 0, 0 0; }
-        100% { background-position: center, 550px 550px, 350px 350px; }
+        100% { background-position: center, 450px 450px, 250px 250px; }
     }
     """
 else:
     bg_css = """
     .stApp {
-        background-color: #fff0f5 !important;
-        background-image: 
-            linear-gradient(120deg, #fff0f5 0%, #ffe4e6 100%),
-            radial-gradient(#fbcfe8 1px, transparent 1px) !important;
-        background-size: 100% 100%, 25px 25px !important;
+        background: linear-gradient(-45deg, #fff1f2, #ffe4e6, #fce7f3, #fdf4ff) !important;
+        background-size: 400% 400% !important;
+        animation: softWaves 15s ease infinite;
+    }
+    @keyframes softWaves {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
     }
     """
 
-# --- CSS Styling (الآمن + تحسين الحقول) ---
+# --- CSS Styling (إصلاح الموبايل والحقول) ---
 st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&family=El+Messiri:wght@500;600;700&display=swap');
@@ -98,35 +106,37 @@ h1, h2, h3, .stMetricLabel {{
 
 {bg_css}
 
-/* إجبار النصوص العامة */
-.stApp, p, span, label, div, .stMarkdown {{ 
-    color: {theme['text']} !important; 
-}}
+.stApp, p, span, label, div, .stMarkdown {{ color: {theme['text']} !important; }}
 
 /* ========================================= */
-/* 📱 إعدادات الموبايل + الإخفاء الآمن 📱 */
+/* 📱 إصلاح القائمة العلوية للموبايل 📱 */
 /* ========================================= */
 
+/* إجبار الهيدر على الظهور لكن شفاف */
 header[data-testid="stHeader"] {{
-    background-color: transparent !important;
-    display: block !important; visibility: visible !important;
+    background: transparent !important;
+    display: block !important;
+    visibility: visible !important;
+    z-index: 99999 !important; /* طبقة عليا جداً */
+    height: 60px !important;
 }}
 
-/* زر القائمة للموبايل */
-button[kind="header"] {{
-    background-color: transparent !important;
+/* إظهار زر القائمة وتلوينه */
+[data-testid="stHeader"] button[kind="header"] {{
+    display: block !important;
+    visibility: visible !important;
     color: {theme['primary']} !important;
-    border: 1px solid {theme['primary']} !important;
+    background-color: transparent !important;
+    border: 1px solid {theme['border']} !important;
     border-radius: 8px !important;
-    display: block !important; visibility: visible !important;
-}}
-button[kind="header"]:hover {{
-    background-color: {theme['primary']}10 !important;
+    margin-top: 10px !important;
 }}
 
+/* إخفاء باقي الأزرار المزعجة في الهيدر */
 [data-testid="stToolbar"] {{ display: none !important; }}
-footer, .stFooter, .stDeployButton {{ display: none !important; }}
-.block-container {{ padding-top: 2rem !important; }}
+[data-testid="stDecoration"] {{ display: none !important; }}
+.stDeployButton {{ display: none !important; }}
+footer {{ display: none !important; }}
 
 /* ========================================= */
 
@@ -135,57 +145,51 @@ section[data-testid="stSidebar"] {{
     background-color: {theme['sidebar_bg']} !important;
     backdrop-filter: blur(25px); border-right: 1px solid {theme['border']};
 }}
+section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span {{ color: {theme['menu_text']} !important; }}
+section[data-testid="stSidebar"] h3 {{ color: {theme['primary']} !important; }}
 
-section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] div {{
-    color: {theme['menu_text']} !important; font-weight: 500;
-}}
-section[data-testid="stSidebar"] h1, section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3 {{
-    color: {theme['primary']} !important;
-}}
-
-/* البطاقات */
+/* البطاقات الزجاجية */
 .glass-card {{
-    background: {theme['glass']};
-    backdrop-filter: blur(20px);
+    background: {theme['glass']}; backdrop-filter: blur(20px);
     border-radius: 20px; border: 1px solid {theme['border']};
-    padding: 25px; margin-bottom: 20px;
-    box-shadow: {theme['shadow']};
-    transform-style: preserve-3d; transform: perspective(1000px);
-    color: {theme['text']};
+    padding: 25px; margin-bottom: 20px; box-shadow: {theme['shadow']};
+    transform-style: preserve-3d; transform: perspective(1000px); color: {theme['text']};
 }}
 
 /* الأزرار */
 div.stButton > button {{
-    background: {theme['btn_grad']}; color: white !important; 
-    border: none; padding: 12px 24px; border-radius: 15px; 
-    font-weight: 700; width: 100%; transition: all 0.2s ease;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    background: {theme['btn_grad']}; color: white !important; border: none; 
+    padding: 12px 24px; border-radius: 15px; font-weight: 700; width: 100%; 
+    transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }}
-div.stButton > button:hover {{ transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }}
+div.stButton > button:hover {{ transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.2); }}
 
-/* --- تحسين حقول الإدخال (النسخة الآمنة) --- */
-/* نجعل الخلفية شبه شفافة لكي تظهر على أي ثيم، مع حدود واضحة */
+/* --- 🔧 إصلاح حقول الإدخال (المشكلة الرئيسية) --- */
 .stTextInput input, .stNumberInput input, .stPasswordInput input {{
-    background: rgba(255, 255, 255, 0.15) !important; /* خلفية موحدة شفافة */
-    border: 2px solid {theme['border']} !important; /* حدود اسمك */
-    color: {theme['text']} !important; 
+    background-color: {theme['input_bg']} !important; /* لون خلفية صريح */
+    color: {theme['input_text']} !important; /* لون كتابة صريح */
+    border: 2px solid {theme['border']} !important;
     border-radius: 12px !important;
-    padding: 10px !important;
-    font-weight: 600 !important; /* خط أثقل */
+    padding: 12px !important;
+    font-weight: 600 !important;
+    caret-color: {theme['primary']} !important; /* لون المؤشر النابض */
 }}
-.stTextInput input:focus, .stNumberInput input:focus {{
-    border-color: {theme['primary']} !important;
-    background: rgba(255, 255, 255, 0.25) !important; /* تفتيح عند الضغط */
+
+/* إصلاح مشكلة المتصفح الذي يملأ الحقول تلقائياً بلون أزرق/أصفر */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {{
+    -webkit-box-shadow: 0 0 0 30px {theme['input_bg']} inset !important;
+    -webkit-text-fill-color: {theme['input_text']} !important;
 }}
+
+/* نص الـ Placeholder */
 ::placeholder {{ color: {theme['text_sec']} !important; opacity: 0.8; }}
 
 /* الجدول */
-div[data-testid="stDataEditor"] {{
-    border: 1px solid {theme['border']}; border-radius: 15px; overflow: hidden;
-}}
-div[data-testid="stDataEditor"] div {{
-    color: {theme['text']} !important; 
-}}
+div[data-testid="stDataEditor"] {{ border: 1px solid {theme['border']}; border-radius: 15px; overflow: hidden; }}
+div[data-testid="stDataEditor"] div {{ color: {theme['text']} !important; }}
 
 h1, h2, h3 {{ color: {theme['primary']} !important; text-shadow: 0 2px 10px rgba(0,0,0,0.05); }}
 .small-text {{ color: {theme['text_sec']} !important; font-size: 0.85rem; }}
@@ -225,6 +229,23 @@ def load_data(file):
 def save_data(df, file): df.to_csv(file, index=False)
 init_dbs()
 
+# --- محرك المستشار الذكي ---
+def get_ai_advice(df):
+    if df.empty: return "جدولك فارغ! ابدأ بإضافة بعض المواد لننطلق. 🚀"
+    total_tasks = df['الدروس'].sum() + df['المحاضرات'].sum()
+    avg_difficulty = df['الصعوبة'].mean()
+    hardest_subject = df.sort_values('الأولوية', ascending=False).iloc[0]['المادة']
+    urgent_tasks = df[df['الأيام'] <= 5]
+    
+    advice = ""
+    if total_tasks > 30: advice += f"⚠️ لديك تراكمات كثيرة ({int(total_tasks)}). أنصحك بتركيز مضاعف!"
+    elif total_tasks > 15: advice += f"💡 التراكمات متوسطة. حافظ على استمرارية المذاكرة."
+    else: advice += f"✅ وضعك ممتاز! استمر."
+    advice += "\n\n"
+    if not urgent_tasks.empty: advice += f"🔥 تنبيه: لديك {len(urgent_tasks)} مواد امتحاناتها قريبة. ابدأ بها."
+    else: advice += f"🎯 نصيحة: ابدأ بمادة '{hardest_subject}' لأن أولويتها عالية."
+    return advice
+
 @st.cache_data
 def load_lottie(url):
     try:
@@ -262,8 +283,7 @@ def login_page():
         tab_log, tab_reg = st.tabs(["دخول", "حساب جديد"])
         
         with tab_log:
-            # استخدام placeholder لتوضيح الحقول على الموبايل
-            u = st.text_input("اسم المستخدم", key="u1", placeholder="أدخل اسم المستخدم هنا...")
+            u = st.text_input("اسم المستخدم", key="u1", placeholder="أدخل اسم المستخدم...")
             p = st.text_input("كلمة المرور", type="password", key="p1", placeholder="أدخل كلمة المرور...")
             if st.button("دخول النظام 🚀"):
                 users = load_data(USERS_DB)
@@ -275,15 +295,15 @@ def login_page():
                 else: st.error("البيانات غير صحيحة")
         
         with tab_reg:
-            n = st.text_input("الاسم", key="n2", placeholder="اسمك الثنائي")
-            u2 = st.text_input("يوزر جديد", key="u2", placeholder="اختر اسم مستخدم")
-            p2 = st.text_input("كلمة مرور", type="password", key="p2", placeholder="كلمة مرور قوية")
+            n = st.text_input("الاسم", key="n2", placeholder="اسمك")
+            u2 = st.text_input("يوزر جديد", key="u2", placeholder="يوزر")
+            p2 = st.text_input("كلمة مرور", type="password", key="p2", placeholder="باسورد")
             if st.button("انضم إلينا ✨"):
                 users = load_data(USERS_DB)
                 if u2 in users['username'].values: st.error("مستخدم")
                 elif u2:
                     save_data(pd.concat([users, pd.DataFrame([{"username": u2, "password": p2, "name": n, "role": "student"}])], ignore_index=True), USERS_DB)
-                    st.success("تم الإنشاء!")
+                    st.success("تم!")
         st.markdown('</div>', unsafe_allow_html=True)
 
 def main_app():
@@ -303,8 +323,8 @@ def main_app():
         </div>
         """, unsafe_allow_html=True)
 
-        menu = option_menu("القائمة", ["الرئيسية", "إضافة مادة", "الخطة"], 
-            icons=['house', 'plus-circle', 'table'], menu_icon="cast", default_index=0,
+        menu = option_menu("القائمة", ["الرئيسية", "إضافة مادة", "الخطة", "مستشار الذكاء"], 
+            icons=['house', 'plus-circle', 'table', 'robot'], menu_icon="cast", default_index=0,
             styles={
                 "container": {"padding": "0!important", "background-color": "transparent"}, 
                 "icon": {"color": theme['primary'], "font-size": "18px"}, 
@@ -363,7 +383,7 @@ def main_app():
                 lec = c4.number_input("محاضرات متراكمة", 0, 100, 0)
                 diff = st.slider("الصعوبة", 1, 10, 5)
                 
-                if st.form_submit_button("حفظ"):
+                if st.form_submit_button("حفظ المادة"):
                     if sub and (les > 0 or lec > 0):
                         prio = (diff * (les + lec)) / days
                         save_data(pd.concat([tasks, pd.DataFrame([{
@@ -391,24 +411,23 @@ def main_app():
             )
             st.markdown('</div>', unsafe_allow_html=True)
             csv = my_tasks.to_csv(index=False).encode('utf-8-sig')
-            st.download_button("📥 تحميل الجدول", csv, "Plan.csv", "text/csv", use_container_width=True)
+            st.download_button("📥 تحميل الخطة (Excel)", csv, "StudyPlan.csv", "text/csv", use_container_width=True)
         else: st.info("فارغ.")
-
-if st.session_state.logged_in: main_app()
-else: login_page()
-
-# ---------------------------------------------------------
-# 5. JS 3D Effect
-# ---------------------------------------------------------
+        
+    elif menu == "مستشار الذكاء":
+        st.markdown(f"<h2>{theme['ai_icon']} مستشارك الدراسي الذكي</h2>", unsafe_allow_html=True)
+        st.markdown('<div class="glass-card" data-tilt>', unsafe_allow_html=True)
+        advice = get_ai_advice(my_tasks)
+        st.info(advice, icon=theme['ai_icon'])
+        st.markdown('</div>', unsafe_allow_html=True)
+        
 components.html("""
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.2/vanilla-tilt.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         function initTilt() {
             var cards = window.parent.document.querySelectorAll('.glass-card');
-            VanillaTilt.init(cards, {
-                max: 10, speed: 400, glare: true, "max-glare": 0.2, scale: 1.01
-            });
+            VanillaTilt.init(cards, { max: 8, speed: 400, glare: true, "max-glare": 0.3, scale: 1.02 });
         }
         setTimeout(initTilt, 1000);
         setInterval(initTilt, 3000);
