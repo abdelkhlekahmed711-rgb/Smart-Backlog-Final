@@ -16,57 +16,45 @@ from streamlit_lottie import st_lottie
 st.set_page_config(page_title="SmartBacklog", page_icon="🚀", layout="wide")
 
 # ---------------------------------------------------------
-# 2. التنسيق (Fixing the Font Conflict)
+# 2. التنسيق (Clean & Stable CSS)
 # ---------------------------------------------------------
 st.markdown("""
 <style>
-/* استيراد الخطوط الضرورية */
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;900&display=swap');
-/* استيراد خط الأيقونات الأصلي لضمان عدم اختفائه */
-@import url('https://fonts.googleapis.com/icon?family=Material+Icons|Material+Symbols+Rounded');
 
-/* --- 1. الإصلاح الجذري لمشكلة النص الغريب --- */
-/* تطبيق خط Cairo على عناصر النصوص فقط */
-h1, h2, h3, h4, h5, h6, p, div, span, a, input, textarea, label, .stMarkdown {
+/* 1. تطبيق الخط العربي على النصوص فقط (وليس الأيقونات) */
+html, body, p, div, h1, h2, h3, h4, h5, h6, span, a, label, button, input, textarea {
     font-family: 'Cairo', sans-serif !important;
 }
 
-/* إجبار الأيقونات وأزرار الهيدر على استخدام خط الرموز وليس Cairo */
-button[kind="header"] i, 
-button[kind="header"] span, 
+/* 2. إصلاح الأيقونات (منع تحولها لنصوص) */
+.material-icons, 
+.st-emotion-cache-1pbqwg9, 
 [data-testid="stSidebarCollapsedControl"] {
-    font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
-    font-weight: normal !important;
+    font-family: 'Material Icons', sans-serif !important;
 }
 
-/* --- 2. إخفاء الهيدر القديم مع الحفاظ على زر القائمة --- */
+/* 3. تنسيق الشريط العلوي الأساسي (عشان الزرار يظهر) */
 header[data-testid="stHeader"] {
-    background: transparent !important;
-    height: 70px !important;
+    background-color: transparent !important; /* شفاف عشان الخلفية تبان */
+    z-index: 1000 !important;
 }
-/* إخفاء الخط الملون العلوي */
+
+/* 4. تلوين زر القائمة (الثلاث شرط) بالأبيض */
+[data-testid="stSidebarCollapsedControl"] {
+    color: white !important;
+    background-color: rgba(255,255,255,0.1) !important;
+    border-radius: 8px;
+    padding: 5px;
+}
+[data-testid="stSidebarCollapsedControl"]:hover {
+    background-color: #2563eb !important;
+}
+
+/* 5. إخفاء الشريط الملون المزعج في الأعلى */
 [data-testid="stDecoration"] { display: none; }
 
-/* تنسيق زر القائمة الأصلي (الثلاث شرط) ليظهر بشكل جميل */
-button[kind="header"] {
-    background: rgba(255, 255, 255, 0.1) !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255,255,255,0.2) !important;
-    border-radius: 10px !important;
-    /* ضبط الموقع بدقة ليكون بجانب البروفايل */
-    top: 15px !important;
-    left: 15px !important;
-    width: 45px !important;
-    height: 45px !important;
-    z-index: 100002 !important;
-    transition: all 0.3s;
-}
-button[kind="header"]:hover {
-    background: #2563eb !important;
-    border-color: #2563eb !important;
-}
-
-/* الخلفية العامة */
+/* 6. الخلفية العامة */
 .stApp {
     background-color: #050505;
     background-image: 
@@ -75,60 +63,22 @@ button[kind="header"]:hover {
     color: #ffffff;
 }
 
-/* --- 3. الناف بار الجديد --- */
-.custom-navbar {
-    position: fixed; top: 0; left: 0; right: 0; height: 75px;
-    background: rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
-    z-index: 100000; /* أقل من زر القائمة بواحد */
-    display: flex; align-items: center; 
-    justify-content: space-between; 
-    padding: 0 20px; 
-    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-}
-
-/* منطقة البروفايل (يسار) */
-.profile-section {
-    display: flex; align-items: center; gap: 10px;
-    /* مسافة بادئة كبيرة من اليسار لترك مكان لزر القائمة الأصلي */
-    margin-left: 60px; 
-    background: rgba(255,255,255,0.05);
-    padding: 5px 15px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.1);
-}
-
-/* منطقة اللوجو (يمين) */
-.brand-section {
-    font-size: 24px; font-weight: 900;
-    background: -webkit-linear-gradient(45deg, #3b82f6, #d946ef);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-}
-
-/* تحسينات الموبايل */
-@media (max-width: 600px) {
-    .custom-navbar { height: 65px; padding: 0 10px; }
-    .brand-section { font-size: 18px; }
-    /* تقليل المسافة في الموبايل */
-    .profile-section { margin-left: 55px; padding: 4px 8px; }
-    .profile-section span { font-size: 0.9rem; }
-    .user-role-text { display: none; } 
-    
-    /* إصلاح ألوان النصوص والأرقام */
-    [data-testid="stMetricValue"], [data-testid="stMetricLabel"] { color: white !important; }
-}
-
-/* تنسيق السايد بار */
+/* 7. تنسيق السايد بار */
 section[data-testid="stSidebar"] {
-    background-color: #0a0a0f !important; border-right: 1px solid #1f2937; padding-top: 80px;
+    background-color: #0a0a0f !important;
+    border-right: 1px solid #1f2937;
 }
 
+/* 8. تحسينات الموبايل (الأرقام واضحة) */
+[data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
+    color: white !important;
+}
+
+/* 9. تنسيق الأزرار */
 div.stButton > button {
     background: linear-gradient(90deg, #2563eb, #7c3aed);
-    color: white; border: none; padding: 16px; border-radius: 16px;
-    font-size: 18px !important; font-weight: 800 !important;
-    width: 100%; margin-top: 10px;
+    color: white; border: none; padding: 12px; border-radius: 12px;
+    font-weight: bold; width: 100%;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -258,28 +208,10 @@ def load_lottie(url):
     except: return None
 
 # ---------------------------------------------------------
-# 4. التطبيق الرئيسي (الهيكل الجديد)
+# 4. التطبيق الرئيسي
 # ---------------------------------------------------------
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'user' not in st.session_state: st.session_state.user = {}
-
-def render_custom_header(user):
-    st.markdown(f"""
-    <div class="custom-navbar">
-        <div class="profile-section">
-            <span style="font-size: 1.2rem;">👤</span>
-            <div style="line-height: 1.2;">
-                <div style="font-weight: bold; font-size: 0.9rem;">{user['name']}</div>
-                <div class="user-role-text" style="font-size: 0.7rem; color: #aaa;">{user['role']}</div>
-            </div>
-        </div>
-        
-        <div class="brand-section">
-            SmartBacklog 🚀
-        </div>
-    </div>
-    <div style="margin-top: 60px;"></div> 
-    """, unsafe_allow_html=True)
 
 def render_progress(pct):
     color = "#ef4444" if pct < 30 else "#facc15" if pct < 70 else "#22c55e"
@@ -298,9 +230,16 @@ def render_progress(pct):
 def main_app():
     user = st.session_state.user
     role = user['role']
-    render_custom_header(user)
     
     with st.sidebar:
+        # عرض البروفايل هنا في القائمة الجانبية (أكثر استقراراً)
+        st.markdown(f"""
+        <div style="text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 20px;">
+            <h3 style="margin:0; color:white;">👤 {user['name']}</h3>
+            <span style="color: #3b82f6; font-size: 0.9em;">{user['role'].upper()}</span>
+        </div>
+        """, unsafe_allow_html=True)
+        
         opts = ["لوحة التحكم", "الجدول اليومي", "غرفة الإنقاذ", "المكتبة"]
         icons = ['speedometer2', 'calendar-check', 'life-preserver', 'collection']
         if role == 'admin': opts.insert(1, "إدارة المستخدمين"); icons.insert(1, "people")
@@ -315,16 +254,14 @@ def main_app():
         if st.button("🚪 خروج"): st.session_state.logged_in = False; st.rerun()
 
     if menu == "لوحة التحكم":
-        st.markdown("<h2 style='margin-bottom:20px'>📊 لوحة القيادة</h2>", unsafe_allow_html=True)
+        st.title("📊 لوحة القيادة")
         tasks = get_tasks(role, user['username'])
         
         if not tasks.empty:
             done = len(tasks[tasks['is_completed']==True]); total = len(tasks); pct = (done/total*100) if total > 0 else 0
             
-            # كارت الإنجاز الرئيسي
             render_progress(pct)
             
-            # عدادات سريعة
             c1, c2, c3 = st.columns(3)
             with c1: st.markdown(f"<div style='background:rgba(255,255,255,0.05);padding:15px;border-radius:15px;text-align:center'><h3>📝 الكل</h3><h2>{total}</h2></div>", unsafe_allow_html=True)
             with c2: st.markdown(f"<div style='background:rgba(255,255,255,0.05);padding:15px;border-radius:15px;text-align:center;color:#4ade80'><h3>✅ تم</h3><h2>{done}</h2></div>", unsafe_allow_html=True)
@@ -343,7 +280,7 @@ def main_app():
                                  color='المادة', text='العدد', template='plotly_dark')
                 
                 fig_bar.update_layout(
-                    paper_bgcolor="rgba(30, 41, 59, 0.6)",
+                    paper_bgcolor="rgba(255,255,255,0.05)",
                     plot_bgcolor="rgba(0,0,0,0)",
                     font_color="white",
                     showlegend=False,
@@ -364,7 +301,7 @@ def main_app():
                                  template='plotly_dark')
                 
                 fig_pie.update_layout(
-                    paper_bgcolor="rgba(30, 41, 59, 0.6)",
+                    paper_bgcolor="rgba(255,255,255,0.05)",
                     plot_bgcolor="rgba(0,0,0,0)",
                     font_color="white",
                     title_font_size=20,
@@ -376,7 +313,7 @@ def main_app():
         else: st.info("لا توجد بيانات.. ابدأ بإضافة مهام!")
 
     elif menu == "الجدول اليومي":
-        st.markdown("<h2 style='margin-bottom:20px'>🗓️ جدول الأولويات</h2>", unsafe_allow_html=True)
+        st.title("🗓️ جدول الأولويات")
         tasks = get_tasks(role, user['username'])
         if not tasks.empty:
             filter_option = st.selectbox("🌪️ تصفية العرض:", ["الكل", "المعلق (Pending)", "المنجز (Done)"])
@@ -408,7 +345,7 @@ def main_app():
         else: st.info("جدولك فارغ! اذهب لغرفة الإنقاذ.")
 
     elif menu == "غرفة الإنقاذ":
-        st.markdown("<h2>🚑 غرفة الإنقاذ (AI Planner)</h2>", unsafe_allow_html=True)
+        st.title("🚑 غرفة الإنقاذ (AI Planner)")
         st.markdown("<div style='background:rgba(255,255,255,0.1);padding:15px;border-radius:15px;margin-bottom:20px'>💡 أدخل المادة المتراكمة وسيقوم الذكاء الاصطناعي بتقسيمها لك.</div>", unsafe_allow_html=True)
         with st.form("rescue_form"):
             c1, c2 = st.columns(2)
@@ -430,7 +367,7 @@ def main_app():
                 time.sleep(1.5); st.rerun()
 
     elif menu == "المكتبة":
-        st.markdown("<h2>📚 مكتبة الوسائط</h2>", unsafe_allow_html=True)
+        st.title("📚 مكتبة الوسائط")
         with st.expander("📤 رفع ملف جديد", expanded=False):
             up_file = st.file_uploader("اختر ملف", type=['pdf', 'png', 'jpg'])
             if up_file is not None and st.button("تأكيد الرفع"):
