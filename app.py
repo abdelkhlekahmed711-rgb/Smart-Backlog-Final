@@ -16,117 +16,111 @@ from streamlit_lottie import st_lottie
 st.set_page_config(page_title="SmartBacklog - المبدع الصغير", page_icon="🎓", layout="wide")
 
 # ---------------------------------------------------------
-# 2. التنسيق الجديد (UI/UX 2.0) - الواجهة القوية
+# 2. التنسيق المتطور (Advanced CSS) - تعديلات الواجهة والخطوط
 # ---------------------------------------------------------
 st.markdown("""
 <style>
-/* استيراد خط 'Cairo' القوي والواضح */
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+/* استيراد خط Cairo المميز */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;900&display=swap');
 
-/* الخلفية العامة - تدرج داكن عميق مناسب للعين وشاشات OLED */
+/* إخفاء الهيدر التقليدي */
+header[data-testid="stHeader"] { display: none !important; }
+footer { visibility: hidden; }
+
+/* الخلفية العامة */
 .stApp {
-    background-color: #000000;
+    background-color: #050505;
     background-image: 
         radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
-        radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
-        radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
-    background-size: 100% 100%;
+        radial-gradient(at 50% 100%, hsla(225,39%,25%,1) 0, transparent 50%);
     color: #ffffff;
 }
 
-/* توحيد الخطوط */
 * { font-family: 'Cairo', sans-serif !important; }
 
-/* العناوين بستايل نيون مضيء */
-h1, h2, h3, h4, h5 {
-    color: #ffffff !important;
-    text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
-    font-weight: 900 !important;
+/* تصميم الشريط العلوي المخصص */
+.custom-navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 70px;
+    background: rgba(20, 20, 30, 0.85);
+    backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
 
-/* السايد بار (القائمة الجانبية) */
+.navbar-brand {
+    font-size: 24px;
+    font-weight: 900;
+    background: -webkit-linear-gradient(45deg, #3b82f6, #d946ef);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.navbar-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.1);
+    padding: 5px 15px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* تعديل السايد بار */
 section[data-testid="stSidebar"] {
-    background-color: rgba(10, 10, 20, 0.95) !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: #0a0a0f !important;
+    border-right: 1px solid #1f2937;
+    padding-top: 80px; /* مساحة عشان الناف بار */
 }
 
-/* الكروت الزجاجية (Glassmorphism) - محدثة لتكون أوضح */
+/* الكروت */
 .glass-card {
-    background: rgba(255, 255, 255, 0.05);
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
     backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 24px;
-    padding: 20px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    margin-bottom: 20px;
-    transition: transform 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s;
 }
-.glass-card:hover {
-    border-color: rgba(56, 189, 248, 0.5);
-    transform: translateY(-5px);
+.glass-card:hover { transform: translateY(-3px); border-color: rgba(56, 189, 248, 0.3); }
+
+/* تحسين الجدول والخطوط */
+div[data-testid="stDataEditor"] {
+    border-radius: 15px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
-/* تحسين حقول الإدخال لتكون واضحة جداً */
-input, .stTextInput > div > div > input, 
-.stDateInput > div > div > input, 
-.stNumberInput > div > div > input,
-textarea {
-    background-color: #1e293b !important;
-    color: #ffffff !important;
-    border: 2px solid #334155 !important;
-    border-radius: 12px !important;
-    font-size: 16px !important;
-    font-weight: bold !important;
-    padding: 10px !important;
-}
-/* عند الضغط على الحقل */
-input:focus, textarea:focus {
-    border-color: #38bdf8 !important;
-    box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
-}
-
-/* القوائم المنسدلة */
-.stSelectbox > div > div > div {
-    background-color: #1e293b !important;
-    color: white !important;
-    font-weight: bold;
-}
-
-/* الأزرار - تصميم قوي (Cyberpunk Style) */
+/* الأزرار العملاقة للأندرويد */
 div.stButton > button {
-    background: linear-gradient(135deg, #2563eb 0%, #a855f7 100%);
-    color: white !important;
-    border: none;
-    padding: 15px 30px;
-    border-radius: 16px;
-    font-size: 18px !important;
-    font-weight: 900 !important;
-    letter-spacing: 0.5px;
-    box-shadow: 0 10px 20px -10px rgba(168, 85, 247, 0.6);
-    width: 100%;
-    transition: all 0.3s ease;
+    background: linear-gradient(90deg, #2563eb, #7c3aed);
+    color: white; border: none; padding: 16px; border-radius: 16px;
+    font-size: 18px !important; font-weight: 800 !important;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+    width: 100%; margin-top: 10px;
 }
-div.stButton > button:active {
-    transform: scale(0.98);
-}
-div.stButton > button:hover {
-    box-shadow: 0 0 20px rgba(37, 99, 235, 0.8);
-    background: linear-gradient(135deg, #3b82f6 0%, #d946ef 100%);
-}
+div.stButton > button:active { transform: scale(0.97); }
 
-/* تخصيص للأندرويد والموبايل (Responsive) */
-@media only screen and (max-width: 600px) {
-    .stApp { padding-top: 20px; }
-    h1 { font-size: 28px !important; }
-    div.stButton > button { padding: 12px 20px; font-size: 16px !important; }
-    .glass-card { padding: 15px; }
+/* تخصيص الموبايل */
+@media (max-width: 600px) {
+    .custom-navbar { height: 60px; padding: 0 15px; }
+    .navbar-brand { font-size: 20px; }
+    .glass-card { padding: 15px; margin-bottom: 15px; }
+    h1 { font-size: 26px !important; }
+    h3 { font-size: 18px !important; }
 }
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 3. منطق قاعدة البيانات (لم يتم المساس به إطلاقاً)
+# 3. منطق قاعدة البيانات (كما هو تماماً بدون لمس)
 # ---------------------------------------------------------
 DB_FILE = 'smart_backlog_v5.db'
 
@@ -139,12 +133,10 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, name TEXT, role TEXT)''')
     c.execute('''CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, user TEXT, subject TEXT, units INTEGER, difficulty INTEGER, priority INTEGER, due_date DATE, is_completed BOOLEAN)''')
     c.execute('''CREATE TABLE IF NOT EXISTS attachments (id INTEGER PRIMARY KEY AUTOINCREMENT, file_name TEXT, file_type TEXT, file_content BLOB, is_real BOOLEAN, upload_date DATE)''')
-    
     try:
         c.execute("INSERT OR IGNORE INTO users VALUES (?, ?, ?, ?)", ('admin', '123', 'مدير النظام', 'admin'))
         c.execute("INSERT OR IGNORE INTO users VALUES (?, ?, ?, ?)", ('student', '123', 'عبدالخالق', 'student'))
     except: pass
-
     c.execute("SELECT count(*) FROM attachments")
     if c.fetchone()[0] < 5:
         subjects = ["الفيزياء", "الكيمياء", "العربي", "الإنجليزي"]
@@ -252,21 +244,37 @@ def load_lottie(url):
     except: return None
 
 # ---------------------------------------------------------
-# 4. التطبيق الرئيسي (UI Structure)
+# 4. التطبيق الرئيسي
 # ---------------------------------------------------------
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'user' not in st.session_state: st.session_state.user = {}
 
-def render_progress(pct):
-    color, emoji = ("#ef4444", "😟") if pct < 30 else ("#facc15", "😐") if pct < 70 else ("#4ade80", "🤩")
+def render_custom_header(user):
+    """رسم الشريط العلوي الجديد المخصص"""
     st.markdown(f"""
-    <div style="margin-bottom:15px; padding:10px; background:rgba(0,0,0,0.2); border-radius:15px">
-        <div style="display:flex;justify-content:space-between;color:white;font-weight:bold;margin-bottom:5px">
-            <span style="font-size:18px">مستوى الإنجاز {emoji}</span>
-            <span style="font-size:18px; color:{color}">{pct:.1f}%</span>
+    <div class="custom-navbar">
+        <div class="navbar-brand">SmartBacklog 🚀</div>
+        <div class="navbar-user">
+            <span style="font-size: 1.2rem;">👤</span>
+            <div style="line-height: 1.2;">
+                <div style="font-weight: bold; font-size: 0.9rem;">{user['name']}</div>
+                <div style="font-size: 0.7rem; color: #aaa;">{user['role']}</div>
+            </div>
         </div>
-        <div style="background:rgba(255,255,255,0.1);border-radius:10px;height:16px; overflow:hidden">
-            <div style="background:{color};width:{pct}%;height:100%;border-radius:10px;box-shadow: 0 0 10px {color}; transition:width 0.8s ease-in-out"></div>
+    </div>
+    <div style="margin-top: 50px;"></div> 
+    """, unsafe_allow_html=True)
+
+def render_progress(pct):
+    color = "#ef4444" if pct < 30 else "#facc15" if pct < 70 else "#22c55e"
+    st.markdown(f"""
+    <div style="margin-bottom:15px; background:rgba(255,255,255,0.03); padding:15px; border-radius:15px;">
+        <div style="display:flex;justify-content:space-between;color:white;font-weight:bold;margin-bottom:8px">
+            <span>مستوى الإنجاز العام</span>
+            <span style="color:{color}">{pct:.1f}%</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.1);border-radius:10px;height:12px;overflow:hidden">
+            <div style="background:{color};width:{pct}%;height:100%;border-radius:10px;"></div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -275,107 +283,119 @@ def main_app():
     user = st.session_state.user
     role = user['role']
     
+    # 1. استدعاء الهيدر المخصص
+    render_custom_header(user)
+    
     with st.sidebar:
-        st.markdown(f"""
-        <div style='text-align:center; margin-bottom:20px; padding:20px; background:rgba(255,255,255,0.05); border-radius:20px'>
-            <h2 style='margin:0'>👤 {user['name']}</h2>
-            <div style='color:#38bdf8; font-weight:bold; letter-spacing:2px; margin-top:5px'>{role.upper()}</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
+        # قائمة جانبية أنيقة
         opts = ["لوحة التحكم", "الجدول اليومي", "غرفة الإنقاذ", "المكتبة"]
-        icons = ['speedometer2', 'table', 'life-preserver', 'collection']
+        icons = ['speedometer2', 'calendar-check', 'life-preserver', 'collection']
         if role == 'admin': opts.insert(1, "إدارة المستخدمين"); icons.insert(1, "people")
         
-        menu = option_menu("القائمة الرئيسية", opts, icons=icons, menu_icon="grid-fill", default_index=0, 
+        menu = option_menu("القائمة", opts, icons=icons, menu_icon="list", default_index=0, 
             styles={
                 "container": {"background-color": "transparent"}, 
-                "nav-link": {"color": "#e2e8f0", "font-size": "17px", "margin": "5px", "border-radius": "10px"},
-                "nav-link-selected": {"background-color": "#3b82f6", "color": "white", "box-shadow": "0 0 15px rgba(59, 130, 246, 0.5)"},
+                "nav-link": {"color": "#ddd", "font-size": "16px", "margin": "5px 0"},
+                "nav-link-selected": {"background-color": "#2563eb", "color": "white", "font-weight":"bold"},
             })
         
         st.write("---"); 
-        if st.button("🚪 تسجيل خروج"): st.session_state.logged_in = False; st.rerun()
+        if st.button("🚪 خروج"): st.session_state.logged_in = False; st.rerun()
 
     if menu == "لوحة التحكم":
-        st.title("🚀 مركز القيادة")
+        st.markdown("<h2 style='margin-bottom:20px'>📊 لوحة القيادة</h2>", unsafe_allow_html=True)
         tasks = get_tasks(role, user['username'])
+        
         if not tasks.empty:
             done = len(tasks[tasks['is_completed']==True]); total = len(tasks); pct = (done/total*100) if total > 0 else 0
             
-            # كارت الإنجاز الرئيسي
+            # قسم الإحصائيات العلوية
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
             render_progress(pct)
             c1, c2, c3 = st.columns(3)
-            # تنسيق الأرقام ليكون كبيراً وواضحاً
-            c1.markdown(f"<div style='text-align:center'><h3>📚 الكل</h3><h1 style='color:#60a5fa'>{total}</h1></div>", unsafe_allow_html=True)
-            c2.markdown(f"<div style='text-align:center'><h3>✅ تم</h3><h1 style='color:#4ade80'>{done}</h1></div>", unsafe_allow_html=True)
-            c3.markdown(f"<div style='text-align:center'><h3>⏳ باقي</h3><h1 style='color:#f87171'>{total - done}</h1></div>", unsafe_allow_html=True)
+            c1.metric("📝 كل المهام", total)
+            c2.metric("✅ المكتملة", done)
+            c3.metric("🔥 المتبقية", total - done)
             st.markdown('</div>', unsafe_allow_html=True)
             
+            # الرسوم البيانية التفاعلية الملونة
             col1, col2 = st.columns(2)
             with col1:
                 st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-                st.markdown("#### 📊 توزيع المواد")
+                st.markdown("##### 🎨 توزيع المواد")
+                
+                # تحسين البيانات للرسم
                 tasks['Subject_Main'] = tasks['subject'].apply(lambda x: x.split('-')[0].strip())
                 cnt = tasks['Subject_Main'].value_counts().reset_index()
                 cnt.columns = ['المادة', 'العدد']
-                fig_bar = px.bar(cnt, x='المادة', y='العدد', text='العدد', color='العدد', color_continuous_scale='Bluyl')
-                fig_bar.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font_color="white")
+                
+                # الرسم الملون (تلوين كل عمود بلون مختلف)
+                fig_bar = px.bar(cnt, x='المادة', y='العدد', 
+                                 color='المادة',  # السر هنا: التلوين حسب اسم المادة
+                                 text='العدد', 
+                                 template='plotly_dark')
+                
+                fig_bar.update_layout(showlegend=False, plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
                 st.plotly_chart(fig_bar, use_container_width=True)
                 st.markdown('</div>', unsafe_allow_html=True)
 
             with col2:
                 st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-                st.markdown("#### 🎯 نسبة الإنجاز")
-                pie_data = tasks['is_completed'].map({True: 'منجز', False: 'معلق'}).value_counts().reset_index()
+                st.markdown("##### 🎯 نسبة الإنجاز")
+                pie_data = tasks['is_completed'].map({True: 'تم الإنجاز', False: 'معلق'}).value_counts().reset_index()
                 pie_data.columns = ['الحالة', 'العدد']
-                fig_pie = px.pie(pie_data, values='العدد', names='الحالة', hole=0.6, color='الحالة', color_discrete_map={'منجز': '#4ade80', 'معلق': '#f87171'})
-                fig_pie.update_traces(textinfo='percent+label', textfont_size=15)
-                fig_pie.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font_color="white", showlegend=False)
+                
+                fig_pie = px.pie(pie_data, values='العدد', names='الحالة', 
+                                 hole=0.5, 
+                                 color='الحالة',
+                                 color_discrete_map={'تم الإنجاز': '#22c55e', 'معلق': '#ef4444'},
+                                 template='plotly_dark')
+                
+                fig_pie.update_traces(textinfo='percent+label', textfont_size=14)
+                fig_pie.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
                 st.plotly_chart(fig_pie, use_container_width=True)
                 st.markdown('</div>', unsafe_allow_html=True)
-        else: st.info("جاري تحميل بياناتك الدراسية...")
+        else: st.info("لا توجد بيانات.. ابدأ بإضافة مهام!")
 
     elif menu == "الجدول اليومي":
-        st.title("🗓️ إدارة المهام الذكية")
+        st.markdown("<h2 style='margin-bottom:20px'>🗓️ جدول الأولويات</h2>", unsafe_allow_html=True)
         tasks = get_tasks(role, user['username'])
         
         if not tasks.empty:
-            today_tasks = tasks[tasks['due_date'] == date.today()]
-            st.markdown(f"""
-            <div class='glass-card' style='display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;'>
-                <div style='text-align:center; min-width:100px'>📅 مهام اليوم<br><b style='font-size:24px; color:#fbbf24'>{len(today_tasks)}</b></div>
-                <div style='text-align:center; min-width:100px'>✅ المنجز<br><b style='font-size:24px; color:#4ade80'>{len(today_tasks[today_tasks['is_completed']==True])}</b></div>
-                <div style='text-align:center; min-width:100px'>🔥 الحالة<br><b style='font-size:20px; color:#60a5fa'>تركيز عالي</b></div>
-            </div>
-            """, unsafe_allow_html=True)
+            # فلترة وترتيب ذكي
+            filter_option = st.selectbox("🌪️ تصفية العرض:", ["الكل", "المعلق (Pending)", "المنجز (Done)"])
+            if filter_option == "المعلق (Pending)": tasks = tasks[tasks['is_completed'] == False]
+            elif filter_option == "المنجز (Done)": tasks = tasks[tasks['is_completed'] == True]
 
-            filter_option = st.selectbox("🌪️ فلترة العرض:", ["عرض الكل", "المهام المعلقة (Pending)", "المهام المنجزة (Done)"])
-
-            if filter_option == "المهام المعلقة (Pending)": tasks = tasks[tasks['is_completed'] == False]
-            elif filter_option == "المهام المنجزة (Done)": tasks = tasks[tasks['is_completed'] == True]
-
+            # الترتيب حسب الأهمية (Priority) تنازلياً
             tasks = tasks.sort_values(by=['is_completed', 'priority'], ascending=[True, False]).reset_index(drop=True)
             
-            st.markdown("### 📝 قائمتك:")
+            st.markdown("### ⚡ رتبنا لك المهام حسب الأهمية:")
+            
+            # الجدول المطور مع خانة الأولوية الواضحة
             edited = st.data_editor(
                 tasks,
                 column_config={
-                    "is_completed": st.column_config.CheckboxColumn("تم", width="small"),
-                    "subject": st.column_config.TextColumn("المهمة", width="large"),
-                    "priority": st.column_config.ProgressColumn("الأهمية", min_value=0, max_value=100, format="%f"),
-                    "due_date": st.column_config.DateColumn("التاريخ"),
+                    "is_completed": st.column_config.CheckboxColumn("إنجاز", width="small"),
+                    "subject": st.column_config.TextColumn("تفاصيل المهمة", width="large"),
+                    # تحويل الأولوية لشريط ملون واضح
+                    "priority": st.column_config.ProgressColumn(
+                        "الأولوية 🔥", 
+                        help="كلما زاد الرقم زادت الأهمية",
+                        format="%d",
+                        min_value=0, max_value=100,
+                    ),
+                    "due_date": st.column_config.DateColumn("الموعد النهائي"),
                     "id": None, "user": None, "units": None, "difficulty": None, "Subject_Main": None
                 },
-                column_order=["is_completed", "subject", "priority", "due_date"],
+                column_order=["is_completed", "priority", "subject", "due_date"],
                 disabled=["subject", "priority", "due_date"],
                 hide_index=True,
                 use_container_width=True,
                 key="tasks_editor"
             )
             
-            if st.button("💾 حفظ التغييرات"):
+            if st.button("💾 حفظ التغييرات الآن"):
                 conn = get_connection()
                 changes = 0
                 for i, row in edited.iterrows():
@@ -383,14 +403,14 @@ def main_app():
                     changes += 1
                 conn.commit(); conn.close()
                 if changes > 0:
-                    st.success("تم الحفظ بنجاح! 💪")
+                    st.toast("تم الحفظ بنجاح! استمر يا بطل 💪", icon="✅")
                     time.sleep(1); st.rerun()
         else:
-            st.info("لا توجد مهام حالياً.")
+            st.info("جدولك فارغ! اذهب لغرفة الإنقاذ.")
 
     elif menu == "غرفة الإنقاذ":
-        st.title("🚑 غرفة الطوارئ (AI Planner)")
-        st.markdown("<div class='glass-card'><p style='font-size:18px'>💡 أدخل المادة المتراكمة وسيقوم الذكاء الاصطناعي بجدولتها لك فوراً.</p></div>", unsafe_allow_html=True)
+        st.markdown("<h2>🚑 غرفة الإنقاذ (AI Planner)</h2>", unsafe_allow_html=True)
+        st.markdown("<div class='glass-card'>💡 أدخل المادة المتراكمة وسيقوم الذكاء الاصطناعي بتقسيمها لك.</div>", unsafe_allow_html=True)
 
         with st.form("rescue_form"):
             c1, c2 = st.columns(2)
@@ -406,28 +426,18 @@ def main_app():
 
             if submit and subj:
                 with st.spinner('جاري تحليل الجدول...'):
-                    time.sleep(1.5)
+                    time.sleep(1)
                 
                 days = (d_date - date.today()).days
                 quota = math.ceil(num / max(days, 1))
                 
-                st.markdown(f"""
-                <div class='glass-card' style='border-color: #4ade80; background:rgba(74, 222, 128, 0.1)'>
-                    <h3 style='color:#4ade80'>✅ تم اعتماد الخطة!</h3>
-                    <ul style='font-size:18px'>
-                        <li>المادة: <b>{subj}</b></li>
-                        <li>المطلوب يومياً: <b>{quota}</b> درس</li>
-                        <li>المدة: <b>{days}</b> أيام</li>
-                    </ul>
-                </div>
-                """, unsafe_allow_html=True)
-
+                st.success(f"تم اعتماد الخطة: {quota} درس يومياً لمدة {days} أيام")
                 for i in range(min(days, num)):
                     add_task_db(user['username'], f"مذاكرة {subj} - جزء {i+1} (إنقاذ)", 1, diff, date.today()+timedelta(days=i))
-                time.sleep(2); st.rerun()
+                time.sleep(1.5); st.rerun()
 
     elif menu == "المكتبة":
-        st.title("📚 مكتبة الوسائط")
+        st.markdown("<h2>📚 مكتبة الوسائط</h2>", unsafe_allow_html=True)
         with st.expander("📤 رفع ملف جديد", expanded=False):
             up_file = st.file_uploader("اختر ملف", type=['pdf', 'png', 'jpg'])
             if up_file is not None and st.button("تأكيد الرفع"):
@@ -436,12 +446,12 @@ def main_app():
                 st.success("تم الرفع!"); time.sleep(1); st.rerun()
         
         files = get_files()
-        cols = st.columns(2) # عمودين للموبايل أفضل
+        cols = st.columns(2)
         for i, row in files.iterrows():
             with cols[i%2]:
                 icon = "📄" if "pdf" in row['file_type'].lower() else "🖼️"
                 st.markdown(f"""
-                <div class='glass-card' style='text-align:center; padding:10px'>
+                <div class='glass-card' style='text-align:center; padding:10px; margin-bottom:10px'>
                     <h2 style='margin:0'>{icon}</h2>
                     <h5 style='margin:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis'>{row['file_name']}</h5>
                 </div>
@@ -465,23 +475,24 @@ def main_app():
             delete_user_db(u_del); st.success("تم الحذف"); time.sleep(1); st.rerun()
 
 # ---------------------------------------------------------
-# 5. صفحة الدخول (تحديث الشكل)
+# 5. صفحة الدخول (محسنة)
 # ---------------------------------------------------------
 def login_page():
-    c1, c2, c3 = st.columns([1, 8, 1]) # توسيط أفضل للموبايل
+    # تصميم متجاوب لصفحة الدخول
+    c1, c2, c3 = st.columns([1, 6, 1])
     with c2:
-        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
         lottie_anim = load_lottie("https://lottie.host/94875632-7605-473d-8065-594ea470b355/9Z53657123.json")
-        if lottie_anim: st_lottie(lottie_anim, height=250, key="anim")
+        if lottie_anim: st_lottie(lottie_anim, height=220, key="anim")
         
         st.markdown("""
-        <div class='glass-card' style='text-align:center;'>
-            <h1 style='background: -webkit-linear-gradient(45deg, #3b82f6, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3em;'>SmartBacklog</h1>
-            <p style='color:#cbd5e1; font-size:1.2em;'>رفيقك الذكي لتنظيم الثانوية العامة 🚀</p>
+        <div class='glass-card' style='text-align:center; margin-bottom:20px'>
+            <h1 style='background: linear-gradient(to right, #60a5fa, #c084fc); -webkit-background-clip: text; color: transparent;'>SmartBacklog</h1>
+            <p style='color:#94a3b8;'>نظام إدارة المهام الذكي للطلاب 🚀</p>
         </div>
         """, unsafe_allow_html=True)
         
-        tab1, tab2 = st.tabs(["🔒 دخول", "✨ جديد"])
+        tab1, tab2 = st.tabs(["🔒 دخول", "✨ تسجيل"])
         with tab1:
             u = st.text_input("اسم المستخدم", key="l_u"); p = st.text_input("كلمة المرور", type="password", key="l_p")
             if st.button("تسجيل الدخول"):
