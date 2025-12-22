@@ -16,34 +16,29 @@ from streamlit_lottie import st_lottie
 st.set_page_config(page_title="SmartBacklog - المبدع الصغير", page_icon="🎓", layout="wide")
 
 # ---------------------------------------------------------
-# 2. التنسيق المتطور (تم تحديثه لحل مشاكل الأندرويد والزر)
+# 2. التنسيق المتطور (CSS)
 # ---------------------------------------------------------
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;900&display=swap');
 
-/* إخفاء خلفية الهيدر الأصلي لكن إبقاء الأزرار */
+/* --- 1. الخدعة الذكية لزر القائمة --- */
+/* نجعل زر القائمة الأصلي كبيراً وشفافاً ويغطي منطقة البروفايل في اليسار */
+button[kind="header"] {
+    display: block !important;
+    position: fixed !important;
+    left: 10px !important;    /* محاذاة لليسار فوق البروفايل */
+    top: 10px !important;
+    width: 200px !important;  /* عرض كافٍ لتغطية خانة الاسم */
+    height: 60px !important;  /* ارتفاع كافٍ */
+    opacity: 0 !important;    /* شفاف تماماً (مخفي) */
+    z-index: 100001 !important; /* فوق كل العناصر */
+    cursor: pointer !important; /* يظهر شكل اليد عند المرور */
+}
+
+/* إخفاء خلفية الهيدر */
 header[data-testid="stHeader"] { background: transparent !important; }
 [data-testid="stDecoration"] { display: none; }
-
-/* --- 1. إظهار زر القائمة (الهمبرغر) وتخصيصه --- */
-button[kind="header"] {
-    background: transparent !important;
-    color: #ffffff !important; /* لون أبيض */
-    font-size: 20px !important;
-    z-index: 100000 !important; /* لضمان ظهوره فوق الناف بار */
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    display: block !important;
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 8px;
-    width: 40px; height: 40px;
-}
-/* إخفاء زر القائمة إذا كانت القائمة مفتوحة (اختياري، لعدم التداخل) */
-section[data-testid="stSidebar"][aria-expanded="true"] + div button[kind="header"] {
-    display: none;
-}
 
 /* الخلفية العامة */
 .stApp {
@@ -55,26 +50,33 @@ section[data-testid="stSidebar"][aria-expanded="true"] + div button[kind="header
 }
 * { font-family: 'Cairo', sans-serif !important; }
 
-/* الشريط العلوي المخصص */
+/* --- 2. عكس أماكن الناف بار --- */
 .custom-navbar {
     position: fixed; top: 0; left: 0; right: 0; height: 70px;
-    background: rgba(20, 20, 30, 0.95); /* زيادة التعتيم للأندرويد */
+    background: rgba(20, 20, 30, 0.95);
     backdrop-filter: blur(15px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1); z-index: 9999;
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: center; 
+    justify-content: space-between; /* توزيع العناصر على الأطراف */
     padding: 0 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
-/* إزاحة اللوجو لليمين قليلاً لترك مكان لزر القائمة */
-.navbar-brand {
-    font-size: 24px; font-weight: 900;
-    margin-left: 50px; /* مسافة لزر القائمة */
-    background: -webkit-linear-gradient(45deg, #3b82f6, #d946ef);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-}
+
+/* البروفايل (على اليسار الآن) */
 .navbar-user {
     display: flex; align-items: center; gap: 10px;
     background: rgba(255,255,255,0.1); padding: 5px 15px;
     border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+    transition: background 0.3s;
+    /* مؤشر بصري أن هذا المكان قابل للضغط */
+    border-left: 3px solid #3b82f6; 
+}
+.navbar-user:hover { background: rgba(255,255,255,0.2); }
+
+/* اللوجو (على اليمين الآن) */
+.navbar-brand {
+    font-size: 24px; font-weight: 900;
+    background: -webkit-linear-gradient(45deg, #3b82f6, #d946ef);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 
 section[data-testid="stSidebar"] {
@@ -86,36 +88,18 @@ section[data-testid="stSidebar"] {
     background: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
     backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-    transition: transform 0.2s;
-    margin-bottom: 20px;
+    transition: transform 0.2s; margin-bottom: 20px;
 }
 
-/* --- 2. إصلاح ألوان الأندرويد (Mobile View) --- */
+/* تحسينات الموبايل */
 @media (max-width: 600px) {
-    .custom-navbar { height: 60px; padding: 0 10px; }
-    .navbar-brand { font-size: 18px; margin-left: 45px; } /* تصغير اللوجو وتعديل المسافة */
-    
-    /* إجبار الأرقام والنصوص على اللون الأبيض */
-    [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
-        color: #ffffff !important;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.8); /* ظل لزيادة الوضوح */
-    }
-    
-    /* إصلاح ألوان الجدول في الموبايل */
-    div[data-testid="stDataEditor"] div {
-        color: #ffffff !important;
-        background-color: transparent !important;
-    }
-    
-    /* العناوين والنصوص العادية */
-    h1, h2, h3, h4, h5, p, span, div {
-        color: #ffffff !important;
-    }
-    
-    /* زر القائمة في الموبايل */
-    button[kind="header"] {
-        top: 10px; left: 10px;
-    }
+    .custom-navbar { height: 60px; padding: 0 15px; }
+    .navbar-brand { font-size: 20px; }
+    .navbar-user { padding: 5px 10px; }
+    /* ضمان أن الأرقام واضحة */
+    [data-testid="stMetricValue"], [data-testid="stMetricLabel"], p, h1, h2, h3 { color: #ffffff !important; }
+    /* تكبير منطقة اللمس للزر الشفاف */
+    button[kind="header"] { width: 150px !important; height: 60px !important; }
 }
 
 div.stButton > button {
@@ -128,7 +112,7 @@ div.stButton > button {
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 3. قاعدة البيانات (كما هي)
+# 3. قاعدة البيانات
 # ---------------------------------------------------------
 DB_FILE = 'smart_backlog_v5.db'
 
@@ -252,7 +236,7 @@ def load_lottie(url):
     except: return None
 
 # ---------------------------------------------------------
-# 4. التطبيق الرئيسي
+# 4. التطبيق الرئيسي (تم عكس العناصر هنا)
 # ---------------------------------------------------------
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'user' not in st.session_state: st.session_state.user = {}
@@ -260,7 +244,6 @@ if 'user' not in st.session_state: st.session_state.user = {}
 def render_custom_header(user):
     st.markdown(f"""
     <div class="custom-navbar">
-        <div class="navbar-brand">SmartBacklog 🚀</div>
         <div class="navbar-user">
             <span style="font-size: 1.2rem;">👤</span>
             <div style="line-height: 1.2;">
@@ -268,6 +251,8 @@ def render_custom_header(user):
                 <div style="font-size: 0.7rem; color: #aaa;">{user['role']}</div>
             </div>
         </div>
+        
+        <div class="navbar-brand">SmartBacklog 🚀</div>
     </div>
     <div style="margin-top: 50px;"></div> 
     """, unsafe_allow_html=True)
