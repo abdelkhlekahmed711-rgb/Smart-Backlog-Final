@@ -16,9 +16,9 @@ from streamlit_lottie import st_lottie
 st.set_page_config(page_title="SmartBacklog - المبدع الصغير", page_icon="🎓", layout="wide")
 
 # ---------------------------------------------------------
-# 2. قاعدة البيانات (SQLite) - نفس المنطق القوي
+# 2. قاعدة البيانات (SQLite) - (نفس المنطق الثابت)
 # ---------------------------------------------------------
-DB_FILE = 'smart_backlog_v3.db'
+DB_FILE = 'smart_backlog_v4.db'
 
 def get_connection():
     return sqlite3.connect(DB_FILE, check_same_thread=False)
@@ -35,7 +35,7 @@ def init_db():
         c.execute("INSERT OR IGNORE INTO users VALUES (?, ?, ?, ?)", ('student', '123', 'عبدالخالق', 'student'))
     except: pass
 
-    # حقن بيانات وهمية للمسابقة
+    # حقن بيانات وهمية للمسابقة (للمنظر)
     c.execute("SELECT count(*) FROM attachments")
     if c.fetchone()[0] < 20:
         subjects = ["الفيزياء", "الكيمياء", "العربي", "الإنجليزي"]
@@ -116,13 +116,12 @@ def load_lottie(url):
     except: return None
 
 # ---------------------------------------------------------
-# 3. التنسيق (CSS) - ✅ إصلاحات التصميم الحديثة
+# 3. التنسيق (CSS) - (نفس التصميم الإبداعي المحافظ عليه)
 # ---------------------------------------------------------
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;700&family=El+Messiri:wght@600&display=swap');
 
-/* الخلفية الحديثة */
 .stApp {
     background: linear-gradient(-45deg, #020617, #0f172a, #1e293b, #000000);
     background-size: 400% 400%;
@@ -134,49 +133,28 @@ st.markdown("""
     100% {background-position: 0% 50%}
 }
 
-/* توحيد الخطوط */
 * { font-family: 'Almarai', sans-serif !important; }
 h1, h2, h3 { font-family: 'El Messiri', sans-serif !important; color: white !important; }
 
-/* ✅ إصلاح الشريط العلوي (الهيدر) ليصبح شفافاً */
-header[data-testid="stHeader"] {
-    background: transparent !important;
-    backdrop-filter: blur(5px); /* تأثير ضبابي خفيف حديث */
-    z-index: 100;
-}
-/* إخفاء الخط الملون الافتراضي */
+header[data-testid="stHeader"] { background: transparent !important; backdrop-filter: blur(5px); z-index: 100; }
 [data-testid="stDecoration"] { display: none; }
 
-/* ✅ إصلاح القائمة الجانبية (موبايل وكمبيوتر) */
-section[data-testid="stSidebar"] {
-    background-color: #020617 !important;
-    border-right: 1px solid rgba(56, 189, 248, 0.1);
-}
-/* إجبار كل نصوص القائمة الجانبية تكون بيضاء */
-section[data-testid="stSidebar"] * {
-    color: white !important;
-}
-/* إصلاح زر الإغلاق في الموبايل */
-button[kind="header"] {
-    background: transparent !important;
-    color: #38bdf8 !important;
-}
+section[data-testid="stSidebar"] { background-color: #020617 !important; border-right: 1px solid rgba(56, 189, 248, 0.1); }
+section[data-testid="stSidebar"] * { color: white !important; }
+button[kind="header"] { background: transparent !important; color: #38bdf8 !important; }
 
-/* ✅ إصلاح تداخل الكلام في الـ Expander */
-.streamlit-expanderHeader {
-    background-color: rgba(30, 41, 59, 0.6) !important;
-    color: white !important;
-    border-radius: 10px;
-    font-size: 16px !important;
-    font-weight: bold !important;
+/* تحسين الأزرار */
+div.stButton > button {
+    background: linear-gradient(90deg, #0ea5e9, #2563eb);
+    color: white !important; border: none;
+    padding: 12px 24px; border-radius: 12px;
+    font-weight: bold; width: 100%;
+    box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
 }
-.streamlit-expanderContent {
-    background-color: rgba(15, 23, 42, 0.4) !important;
-    color: white !important;
-    border: none;
-}
+div.stButton > button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(14, 165, 233, 0.6); }
 
-/* البطاقات الزجاجية */
+/* البطاقات */
 .glass-card {
     background: rgba(30, 41, 59, 0.75);
     backdrop-filter: blur(16px);
@@ -186,27 +164,21 @@ button[kind="header"] {
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
 }
+.metric-card {
+    text-align: center; border-right: 1px solid rgba(255,255,255,0.1);
+}
 
-/* المدخلات والأزرار */
-input, .stTextInput > div > div > input {
+/* المدخلات */
+input, .stTextInput > div > div > input, .stDateInput > div > div > input {
     background-color: rgba(15, 23, 42, 0.8) !important;
     color: white !important;
     border: 1px solid #38bdf8 !important;
     border-radius: 10px !important;
 }
-div.stButton > button {
-    background: linear-gradient(90deg, #0ea5e9, #2563eb);
-    color: white !important; border: none;
-    padding: 10px 20px; border-radius: 12px;
-    font-weight: bold; width: 100%;
-    transition: transform 0.2s;
+.stSelectbox > div > div > div {
+    background-color: rgba(15, 23, 42, 0.8) !important;
+    color: white !important;
 }
-div.stButton > button:hover { transform: scale(1.02); }
-
-/* التبويبات */
-.stTabs [data-baseweb="tab-list"] { gap: 10px; }
-.stTabs [data-baseweb="tab"] { background-color: rgba(255,255,255,0.1); border-radius: 10px; color: white; }
-.stTabs [aria-selected="true"] { background-color: #38bdf8; color: black; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -226,15 +198,13 @@ def main_app():
     
     with st.sidebar:
         st.markdown(f"<div style='text-align:center; margin-bottom:20px'><h3>👤 {user['name']}</h3><span style='color:#38bdf8; font-weight:bold'>{role.upper()}</span></div>", unsafe_allow_html=True)
-        
         opts = ["لوحة التحكم", "الجدول اليومي", "غرفة الإنقاذ", "المكتبة"]
         icons = ['speedometer2', 'table', 'life-preserver', 'collection']
         if role == 'admin': opts.insert(1, "إدارة المستخدمين"); icons.insert(1, "people")
         
-        # القائمة المعدلة (ألوان ثابتة)
         menu = option_menu("القائمة", opts, icons=icons, menu_icon="cast", default_index=0, 
             styles={
-                "container": {"background-color": "#020617"}, # نفس لون القائمة الجانبية
+                "container": {"background-color": "#020617"}, 
                 "nav-link": {"color": "white", "font-size": "16px"},
                 "nav-link-selected": {"background-color": "#38bdf8", "color": "white"},
             })
@@ -255,31 +225,128 @@ def main_app():
         else: st.info("ابدأ بإضافة مهام.")
 
     elif menu == "الجدول اليومي":
-        st.title("🗓️ جدول المهام")
+        st.title("🗓️ إدارة المهام الذكية")
         tasks = get_tasks(role, user['username'])
+        
         if not tasks.empty:
+            # --- ميزة 1: إحصائية سريعة لليوم ---
+            today_tasks = tasks[tasks['due_date'] == date.today()]
+            today_count = len(today_tasks)
+            today_done = len(today_tasks[today_tasks['is_completed']==True])
+            
+            st.markdown(f"""
+            <div class='glass-card' style='display:flex; justify-content:space-around; align-items:center; padding:15px'>
+                <div>📅 <b>مهام اليوم:</b> {today_count}</div>
+                <div>✅ <b>منجز اليوم:</b> {today_done}</div>
+                <div>🔥 <b>التركيز:</b> عالي</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # --- ميزة 2: الفلاتر (جعل الأزرار حقيقية ومفيدة) ---
+            col_filter, col_space = st.columns([2, 4])
+            with col_filter:
+                filter_option = st.selectbox("🌪️ تصفية المهام:", ["عرض الكل", "المهام المعلقة (Pending)", "المهام المنجزة (Done)"])
+
+            # تطبيق الفلتر
+            if filter_option == "المهام المعلقة (Pending)":
+                tasks = tasks[tasks['is_completed'] == False]
+            elif filter_option == "المهام المنجزة (Done)":
+                tasks = tasks[tasks['is_completed'] == True]
+
+            # ترتيب وعرض الجدول
             tasks = tasks.sort_values(by=['is_completed', 'priority'], ascending=[True, False]).reset_index(drop=True)
-            edited = st.data_editor(tasks, column_config={"is_completed": st.column_config.CheckboxColumn("تم", width="small"), "subject": st.column_config.TextColumn("المهمة", width="large"), "priority": st.column_config.ProgressColumn("الأهمية 🔥", min_value=0, max_value=100), "due_date": st.column_config.DateColumn("التاريخ"), "id": None, "user": None, "units": None, "difficulty": None}, column_order=["is_completed", "subject", "priority", "due_date"], disabled=["subject", "priority", "due_date"], hide_index=True, use_container_width=True)
-            if st.button("حفظ التغييرات 💾"):
+            
+            edited = st.data_editor(
+                tasks,
+                column_config={
+                    "is_completed": st.column_config.CheckboxColumn("إنجاز", width="small"),
+                    "subject": st.column_config.TextColumn("تفاصيل المهمة", width="large"),
+                    "priority": st.column_config.ProgressColumn("الأهمية 🔥", min_value=0, max_value=100, format="%f"),
+                    "due_date": st.column_config.DateColumn("تاريخ التنفيذ"),
+                    "id": None, "user": None, "units": None, "difficulty": None
+                },
+                column_order=["is_completed", "subject", "priority", "due_date"],
+                disabled=["subject", "priority", "due_date"],
+                hide_index=True,
+                use_container_width=True,
+                key="tasks_editor"
+            )
+            
+            # زر حفظ حقيقي
+            if st.button("💾 حفظ التحديثات الآن"):
                 conn = get_connection()
-                for i, row in edited.iterrows(): conn.execute("UPDATE tasks SET is_completed=? WHERE id=?", (row['is_completed'], row['id']))
-                conn.commit(); conn.close(); st.success("تم الحفظ!"); time.sleep(0.5); st.rerun()
-        else: st.info("الجدول فارغ")
+                changes_count = 0
+                for i, row in edited.iterrows():
+                    # تحديث الحالة فقط
+                    conn.execute("UPDATE tasks SET is_completed=? WHERE id=?", (row['is_completed'], row['id']))
+                    changes_count += 1
+                conn.commit(); conn.close()
+                if changes_count > 0:
+                    st.toast("تم حفظ تقدمك بنجاح! عاش يا بطل 💪", icon="✅")
+                    time.sleep(1)
+                    st.rerun()
+        else:
+            st.info("جدولك نظيف! اذهب لغرفة الإنقاذ لإضافة خطة جديدة.")
 
     elif menu == "غرفة الإنقاذ":
-        st.title("🚑 إضافة وتفتيت المهام")
-        with st.form("rescue"):
-            c1, c2 = st.columns(2); subj = c1.text_input("اسم المادة"); num = c2.number_input("العدد", 1, 50, 5)
-            diff = st.slider("الأهمية", 1, 10, 5); d_date = st.date_input("تاريخ التسليم")
-            if st.form_submit_button("إضافة لجدولي"):
-                days = (d_date - date.today()).days; quota = math.ceil(num / max(days, 1))
-                for i in range(min(days, num)): add_task_db(user['username'], f"{subj} - جزء {i+1}", 1, diff, date.today()+timedelta(days=i))
-                st.success("تم التوزيع والإضافة!"); time.sleep(1); st.rerun()
+        st.title("🚑 غرفة عمليات الإنقاذ (AI Planner)")
+        
+        st.markdown("""
+        <div class='glass-card'>
+            <p>💡 هذا النظام يستخدم خوارزمية ذكية لتقسيم المواد المتراكمة بناءً على الوقت المتاح وصعوبة المادة.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        with st.form("rescue_form"):
+            c1, c2 = st.columns(2)
+            with c1:
+                subj = st.text_input("📚 اسم المادة المتراكمة", placeholder="مثال: الفيزياء الكهربية")
+                num = st.number_input("🔢 عدد الدروس/الوحدات", 1, 100, 5)
+            with c2:
+                diff = st.slider("😰 مستوى الصعوبة/القلق (1-10)", 1, 10, 7)
+                d_date = st.date_input("🗓️ أريد الانتهاء قبل تاريخ:", min_value=date.today() + timedelta(days=1))
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            submit = st.form_submit_button("🚀 تفعيل خطة الإنقاذ")
+
+            if submit:
+                if subj:
+                    # محاكاة التفكير (Visual Effect)
+                    progress_text = "جاري تحليل الوقت المتاح..."
+                    my_bar = st.progress(0, text=progress_text)
+                    for percent_complete in range(100):
+                        time.sleep(0.01)
+                        my_bar.progress(percent_complete + 1, text="جاري توزيع المهام بذكاء...")
+                    my_bar.empty()
+
+                    # المنطق الحقيقي
+                    days = (d_date - date.today()).days
+                    quota = math.ceil(num / max(days, 1))
+                    
+                    # عرض بطاقة ملخص قبل الحفظ
+                    st.success(f"تمت الموافقة على الخطة! سيتم إضافة {num} مهام لجدولك.")
+                    st.markdown(f"""
+                    <div class='glass-card' style='border-color: #22c55e'>
+                        <h4>✅ ملخص الخطة:</h4>
+                        <ul>
+                            <li><b>المادة:</b> {subj}</li>
+                            <li><b>المعدل اليومي:</b> {quota} درس/يوم</li>
+                            <li><b>المدة:</b> {days} أيام</li>
+                        </ul>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    # التنفيذ في الداتابيز
+                    for i in range(min(days, num)):
+                        add_task_db(user['username'], f"مذاكرة {subj} - جزء {i+1} (إنقاذ)", 1, diff, date.today()+timedelta(days=i))
+                    
+                    time.sleep(2)
+                    st.rerun()
+                else:
+                    st.error("من فضلك أدخل اسم المادة.")
 
     elif menu == "المكتبة":
         st.title("📚 مكتبة الوسائط")
-        
-        # --- ✅ إصلاح التداخل هنا بتغيير العنوان ---
         with st.expander("📤 اضغط هنا لرفع ملف جديد", expanded=False):
             up_file = st.file_uploader("اختر ملف (PDF, صورة)", type=['pdf', 'png', 'jpg'])
             if up_file is not None:
