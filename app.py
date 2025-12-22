@@ -7,7 +7,6 @@ import random
 import math
 import requests
 from datetime import date, timedelta
-import datetime
 from streamlit_option_menu import option_menu
 from streamlit_lottie import st_lottie
 
@@ -17,7 +16,7 @@ from streamlit_lottie import st_lottie
 st.set_page_config(page_title="SmartBacklog", page_icon="🚀", layout="wide")
 
 # ---------------------------------------------------------
-# 2. التنسيق (تم تحديثه لإصلاح ألوان الأندرويد والجدول)
+# 2. التنسيق (Clean & Stable CSS)
 # ---------------------------------------------------------
 st.markdown("""
 <style>
@@ -59,10 +58,10 @@ section[data-testid="stSidebar"] h2,
 section[data-testid="stSidebar"] h3, 
 section[data-testid="stSidebar"] span, 
 section[data-testid="stSidebar"] div {
-    color: #ffffff !important; /* فرض اللون الأبيض */
+    color: #ffffff !important;
 }
 
-/* 5. تحسينات الموبايل العامة (فرض التباين) */
+/* 5. تحسينات الموبايل العامة */
 @media (max-width: 600px) {
     [data-testid="stMetricValue"], [data-testid="stMetricLabel"] { color: white !important; }
     .stDataFrame { background: rgba(255,255,255,0.05) !important; border-radius: 10px; }
@@ -199,7 +198,6 @@ def render_progress(pct):
     </div>
     """, unsafe_allow_html=True)
 
-# دالة مساعدة لأسماء الأيام بالعربي
 def get_arabic_day_name(dt):
     days = {'Saturday': 'السبت', 'Sunday': 'الأحد', 'Monday': 'الاثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء', 'Thursday': 'الخميس', 'Friday': 'الجمعة'}
     return days.get(dt.strftime("%A"), dt.strftime("%A"))
@@ -216,7 +214,6 @@ def main_app():
         </div>
         """, unsafe_allow_html=True)
         
-        # ألوان واضحة للقائمة
         opts = ["لوحة التحكم", "الجدول اليومي", "غرفة الإنقاذ", "المكتبة"]
         icons = ['speedometer2', 'calendar-check', 'life-preserver', 'collection']
         if role == 'admin': opts.insert(1, "إدارة المستخدمين"); icons.insert(1, "people")
@@ -224,7 +221,7 @@ def main_app():
         menu = option_menu("القائمة", opts, icons=icons, menu_icon="list", default_index=0, 
             styles={
                 "container": {"background-color": "transparent"}, 
-                "nav-link": {"color": "white", "font-size": "16px", "margin": "5px 0"}, # لون أبيض صريح
+                "nav-link": {"color": "white", "font-size": "16px", "margin": "5px 0"},
                 "nav-link-selected": {"background-color": "#2563eb", "color": "white", "font-weight":"bold"},
                 "icon": {"color": "#38bdf8", "font-size": "18px"},
             })
@@ -247,57 +244,59 @@ def main_app():
             
             st.markdown("---")
 
-            # 2. الجدول الأسبوعي الذكي (بديل الرسم البياني)
-            col_sched, col_pie = st.columns([2, 1]) # الجدول يأخذ مساحة أكبر
+            col_sched, col_pie = st.columns([2, 1])
             
             with col_sched:
-                st.subheader("📅 خطة الأسبوع الحالي")
+                st.subheader("📈 مستوى الضغط الدراسي (7 أيام)")
                 
-                # تحضير بيانات الجدول الأسبوعي
+                # تحضير بيانات الرسم البياني الخطي
                 today = date.today()
                 week_data = []
                 
-                # إنشاء سجل للـ 7 أيام القادمة
                 for i in range(7):
                     current_day = today + timedelta(days=i)
-                    day_name = get_arabic_day_name(current_day)
+                    # تنسيق اليوم ليظهر الاسم بالعربي + التاريخ
+                    day_label = f"{get_arabic_day_name(current_day)} ({current_day.strftime('%d/%m')})"
                     
-                    # البحث عن مهام هذا اليوم
                     day_tasks = tasks[tasks['due_date'] == current_day]
-                    
-                    if not day_tasks.empty:
-                        # جلب أهم مادة (أعلى أولوية)
-                        top_task = day_tasks.sort_values(by='priority', ascending=False).iloc[0]['subject']
-                        count = len(day_tasks)
-                        status = "✅" if day_tasks['is_completed'].all() else "⏳"
-                    else:
-                        top_task = "---"
-                        count = 0
-                        status = "راحة 💤"
+                    count = len(day_tasks)
+                    # أهم مهمة للظهور في التلميح (Hover)
+                    top_focus = day_tasks.sort_values(by='priority', ascending=False).iloc[0]['subject'] if not day_tasks.empty else "لا يوجد"
                     
                     week_data.append({
-                        "اليوم": day_name,
+                        "اليوم": day_label,
                         "التاريخ": current_day,
                         "عدد المهام": count,
-                        "ابدأ بـ (الأهم)": top_task,
-                        "الحالة": status
+                        "التركيز على": top_focus
                     })
                 
                 df_week = pd.DataFrame(week_data)
                 
-                # عرض الجدول بتنسيق جميل
-                st.dataframe(
-                    df_week,
-                    column_config={
-                        "اليوم": st.column_config.TextColumn("اليوم", width="small"),
-                        "التاريخ": st.column_config.DateColumn("التاريخ", format="DD/MM"),
-                        "عدد المهام": st.column_config.ProgressColumn("الضغط الدراسي", min_value=0, max_value=5, format="%d"),
-                        "ابدأ بـ (الأهم)": st.column_config.TextColumn("🎯 التركيز على", width="large"),
-                        "الحالة": st.column_config.TextColumn("الحالة", width="small"),
-                    },
-                    hide_index=True,
-                    use_container_width=True
+                # رسم المخطط السهمي (Line Chart)
+                fig_line = px.line(
+                    df_week, 
+                    x='اليوم', 
+                    y='عدد المهام', 
+                    markers=True, # إضافة نقاط على الخط
+                    template='plotly_dark',
+                    hover_data=['التركيز على'] # إظهار اسم المهمة عند الوقوف بالماوس
                 )
+                
+                # تحسين مظهر الرسم
+                fig_line.update_traces(line_color='#38bdf8', line_width=3, marker_size=8)
+                fig_line.update_layout(
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(255,255,255,0.05)",
+                    font_color="white",
+                    xaxis_title="",
+                    yaxis_title="عدد الدروس/المهام",
+                    margin=dict(t=20, l=10, r=10, b=10)
+                )
+                
+                # جعل المحور الصادي يبدأ من 0 دائماً ويزيد بأرقام صحيحة
+                fig_line.update_yaxes(dtick=1, rangemode="tozero")
+                
+                st.plotly_chart(fig_line, use_container_width=True)
 
             with col_pie:
                 st.subheader("🎯 نسبة الإنجاز")
