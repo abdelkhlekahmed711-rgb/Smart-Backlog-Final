@@ -13,43 +13,57 @@ from streamlit_lottie import st_lottie
 # ---------------------------------------------------------
 # 1. إعدادات الصفحة
 # ---------------------------------------------------------
-st.set_page_config(page_title="SmartBacklog - المبدع الصغير", page_icon="🎓", layout="wide")
+st.set_page_config(page_title="SmartBacklog", page_icon="🚀", layout="wide")
 
 # ---------------------------------------------------------
-# 2. التنسيق المستقر (Clean CSS - تم إصلاح الأخطاء)
+# 2. التنسيق (Fixing the Font Conflict)
 # ---------------------------------------------------------
 st.markdown("""
 <style>
+/* استيراد الخطوط الضرورية */
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;900&display=swap');
+/* استيراد خط الأيقونات الأصلي لضمان عدم اختفائه */
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons|Material+Symbols+Rounded');
 
-/* --- 1. إصلاح مشكلة الخط (استثناء الأيقونات) --- */
-/* نطبق الخط على النصوص العربية والإنجليزية فقط، وليس على أيقونات النظام */
-body, h1, h2, h3, h4, h5, h6, p, div, span, a, button, input, textarea, label {
+/* --- 1. الإصلاح الجذري لمشكلة النص الغريب --- */
+/* تطبيق خط Cairo على عناصر النصوص فقط */
+h1, h2, h3, h4, h5, h6, p, div, span, a, input, textarea, label, .stMarkdown {
     font-family: 'Cairo', sans-serif !important;
 }
-/* إعادة ضبط خط الأيقونات لتعمل بشكل صحيح */
-[data-testid="stSidebarCollapsedControl"] i, 
-.material-icons,
-.material-symbols-rounded {
-    font-family: 'Material Icons' !important; 
+
+/* إجبار الأيقونات وأزرار الهيدر على استخدام خط الرموز وليس Cairo */
+button[kind="header"] i, 
+button[kind="header"] span, 
+[data-testid="stSidebarCollapsedControl"] {
+    font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
+    font-weight: normal !important;
 }
 
-/* --- 2. تنظيف الهيدر وزر القائمة --- */
-/* إخفاء الشريط الملون العلوي فقط */
-header[data-testid="stHeader"] { background: transparent !important; }
+/* --- 2. إخفاء الهيدر القديم مع الحفاظ على زر القائمة --- */
+header[data-testid="stHeader"] {
+    background: transparent !important;
+    height: 70px !important;
+}
+/* إخفاء الخط الملون العلوي */
 [data-testid="stDecoration"] { display: none; }
 
-/* تنسيق زر القائمة الأصلي (ليكون أبيض وواضح) */
+/* تنسيق زر القائمة الأصلي (الثلاث شرط) ليظهر بشكل جميل */
 button[kind="header"] {
-    background: transparent !important;
+    background: rgba(255, 255, 255, 0.1) !important;
     color: #ffffff !important;
     border: 1px solid rgba(255,255,255,0.2) !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
+    /* ضبط الموقع بدقة ليكون بجانب البروفايل */
     top: 15px !important;
     left: 15px !important;
     width: 45px !important;
     height: 45px !important;
-    z-index: 100001 !important;
+    z-index: 100002 !important;
+    transition: all 0.3s;
+}
+button[kind="header"]:hover {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
 }
 
 /* الخلفية العامة */
@@ -61,57 +75,53 @@ button[kind="header"] {
     color: #ffffff;
 }
 
-/* --- 3. تصميم الناف بار (بدون تداخل) --- */
+/* --- 3. الناف بار الجديد --- */
 .custom-navbar {
     position: fixed; top: 0; left: 0; right: 0; height: 75px;
-    background: rgba(15, 23, 42, 0.9); /* لون داكن وواضح */
-    backdrop-filter: blur(10px);
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
-    z-index: 100000; /* تحت زر القائمة مباشرة */
+    z-index: 100000; /* أقل من زر القائمة بواحد */
     display: flex; align-items: center; 
-    padding: 0 15px; 
+    justify-content: space-between; 
+    padding: 0 20px; 
     box-shadow: 0 4px 20px rgba(0,0,0,0.6);
 }
 
-/* حاوية البروفايل (على اليسار، بعد زر القائمة) */
-.profile-container {
-    margin-left: 60px; /* مسافة لزر القائمة الأصلي */
+/* منطقة البروفايل (يسار) */
+.profile-section {
     display: flex; align-items: center; gap: 10px;
-    background: rgba(255,255,255,0.05); 
+    /* مسافة بادئة كبيرة من اليسار لترك مكان لزر القائمة الأصلي */
+    margin-left: 60px; 
+    background: rgba(255,255,255,0.05);
     padding: 5px 15px;
-    border-radius: 20px; 
+    border-radius: 12px;
     border: 1px solid rgba(255,255,255,0.1);
 }
 
-/* اللوجو (على اليمين) */
-.brand-container {
-    margin-left: auto; /* يدفع اللوجو لليمين */
-    font-size: 22px; font-weight: 900;
+/* منطقة اللوجو (يمين) */
+.brand-section {
+    font-size: 24px; font-weight: 900;
     background: -webkit-linear-gradient(45deg, #3b82f6, #d946ef);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-}
-
-/* تنسيق السايد بار */
-section[data-testid="stSidebar"] {
-    background-color: #0a0a0f !important; border-right: 1px solid #1f2937; padding-top: 80px;
-}
-
-/* الكروت */
-.glass-card {
-    background: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
-    backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-    transition: transform 0.2s; margin-bottom: 20px;
 }
 
 /* تحسينات الموبايل */
 @media (max-width: 600px) {
     .custom-navbar { height: 65px; padding: 0 10px; }
-    .brand-container { font-size: 18px; }
-    .profile-container { margin-left: 55px; padding: 4px 10px; }
-    .profile-container span { font-size: 1rem; }
-    /* إجبار النصوص على اللون الأبيض */
+    .brand-section { font-size: 18px; }
+    /* تقليل المسافة في الموبايل */
+    .profile-section { margin-left: 55px; padding: 4px 8px; }
+    .profile-section span { font-size: 0.9rem; }
+    .user-role-text { display: none; } 
+    
+    /* إصلاح ألوان النصوص والأرقام */
     [data-testid="stMetricValue"], [data-testid="stMetricLabel"] { color: white !important; }
+}
+
+/* تنسيق السايد بار */
+section[data-testid="stSidebar"] {
+    background-color: #0a0a0f !important; border-right: 1px solid #1f2937; padding-top: 80px;
 }
 
 div.stButton > button {
@@ -248,23 +258,25 @@ def load_lottie(url):
     except: return None
 
 # ---------------------------------------------------------
-# 4. التطبيق الرئيسي
+# 4. التطبيق الرئيسي (الهيكل الجديد)
 # ---------------------------------------------------------
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'user' not in st.session_state: st.session_state.user = {}
 
 def render_custom_header(user):
-    # تم تبسيط كود HTML لإزالة التعارضات
     st.markdown(f"""
     <div class="custom-navbar">
-        <div class="profile-container">
+        <div class="profile-section">
             <span style="font-size: 1.2rem;">👤</span>
             <div style="line-height: 1.2;">
                 <div style="font-weight: bold; font-size: 0.9rem;">{user['name']}</div>
-                <div style="font-size: 0.7rem; color: #aaa;">{user['role']}</div>
+                <div class="user-role-text" style="font-size: 0.7rem; color: #aaa;">{user['role']}</div>
             </div>
         </div>
-        <div class="brand-container">SmartBacklog 🚀</div>
+        
+        <div class="brand-section">
+            SmartBacklog 🚀
+        </div>
     </div>
     <div style="margin-top: 60px;"></div> 
     """, unsafe_allow_html=True)
@@ -272,7 +284,7 @@ def render_custom_header(user):
 def render_progress(pct):
     color = "#ef4444" if pct < 30 else "#facc15" if pct < 70 else "#22c55e"
     st.markdown(f"""
-    <div style="margin-bottom:15px; background:rgba(255,255,255,0.03); padding:15px; border-radius:15px;">
+    <div style="margin-bottom:15px; background:rgba(255,255,255,0.03); padding:15px; border-radius:15px; border:1px solid rgba(255,255,255,0.05);">
         <div style="display:flex;justify-content:space-between;color:white;font-weight:bold;margin-bottom:8px">
             <span>مستوى الإنجاز العام</span>
             <span style="color:{color}">{pct:.1f}%</span>
@@ -309,13 +321,16 @@ def main_app():
         if not tasks.empty:
             done = len(tasks[tasks['is_completed']==True]); total = len(tasks); pct = (done/total*100) if total > 0 else 0
             
-            st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+            # كارت الإنجاز الرئيسي
             render_progress(pct)
+            
+            # عدادات سريعة
             c1, c2, c3 = st.columns(3)
-            c1.metric("📝 كل المهام", total)
-            c2.metric("✅ المكتملة", done)
-            c3.metric("🔥 المتبقية", total - done)
-            st.markdown('</div>', unsafe_allow_html=True)
+            with c1: st.markdown(f"<div style='background:rgba(255,255,255,0.05);padding:15px;border-radius:15px;text-align:center'><h3>📝 الكل</h3><h2>{total}</h2></div>", unsafe_allow_html=True)
+            with c2: st.markdown(f"<div style='background:rgba(255,255,255,0.05);padding:15px;border-radius:15px;text-align:center;color:#4ade80'><h3>✅ تم</h3><h2>{done}</h2></div>", unsafe_allow_html=True)
+            with c3: st.markdown(f"<div style='background:rgba(255,255,255,0.05);padding:15px;border-radius:15px;text-align:center;color:#f87171'><h3>🔥 باقي</h3><h2>{total-done}</h2></div>", unsafe_allow_html=True)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
             
             col1, col2 = st.columns(2)
             with col1:
@@ -394,7 +409,7 @@ def main_app():
 
     elif menu == "غرفة الإنقاذ":
         st.markdown("<h2>🚑 غرفة الإنقاذ (AI Planner)</h2>", unsafe_allow_html=True)
-        st.markdown("<div class='glass-card'>💡 أدخل المادة المتراكمة وسيقوم الذكاء الاصطناعي بتقسيمها لك.</div>", unsafe_allow_html=True)
+        st.markdown("<div style='background:rgba(255,255,255,0.1);padding:15px;border-radius:15px;margin-bottom:20px'>💡 أدخل المادة المتراكمة وسيقوم الذكاء الاصطناعي بتقسيمها لك.</div>", unsafe_allow_html=True)
         with st.form("rescue_form"):
             c1, c2 = st.columns(2)
             with c1:
@@ -428,7 +443,7 @@ def main_app():
             with cols[i%2]:
                 icon = "📄" if "pdf" in row['file_type'].lower() else "🖼️"
                 st.markdown(f"""
-                <div class='glass-card' style='text-align:center; padding:10px; margin-bottom:10px'>
+                <div style='background:rgba(255,255,255,0.05);padding:15px;border-radius:15px;text-align:center;margin-bottom:10px;border:1px solid rgba(255,255,255,0.1)'>
                     <h2 style='margin:0'>{icon}</h2>
                     <h5 style='margin:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis'>{row['file_name']}</h5>
                 </div>
@@ -460,7 +475,7 @@ def login_page():
         lottie_anim = load_lottie("https://lottie.host/94875632-7605-473d-8065-594ea470b355/9Z53657123.json")
         if lottie_anim: st_lottie(lottie_anim, height=220, key="anim")
         st.markdown("""
-        <div class='glass-card' style='text-align:center; margin-bottom:20px'>
+        <div style='text-align:center; margin-bottom:20px; background:rgba(255,255,255,0.05); padding:20px; border-radius:20px'>
             <h1 style='background: linear-gradient(to right, #60a5fa, #c084fc); -webkit-background-clip: text; color: transparent;'>SmartBacklog</h1>
             <p style='color:#94a3b8;'>نظام إدارة المهام الذكي للطلاب 🚀</p>
         </div>
