@@ -7,6 +7,7 @@ import random
 import math
 import requests
 from datetime import date, timedelta
+import datetime
 from streamlit_option_menu import option_menu
 from streamlit_lottie import st_lottie
 
@@ -16,7 +17,7 @@ from streamlit_lottie import st_lottie
 st.set_page_config(page_title="SmartBacklog", page_icon="🚀", layout="wide")
 
 # ---------------------------------------------------------
-# 2. التنسيق (النسخة المستقرة والنظيفة)
+# 2. التنسيق (تم تحديثه لإصلاح ألوان الأندرويد والجدول)
 # ---------------------------------------------------------
 st.markdown("""
 <style>
@@ -39,7 +40,7 @@ header[data-testid="stHeader"] { background-color: transparent !important; z-ind
 [data-testid="stSidebarCollapsedControl"]:hover { background-color: #2563eb !important; }
 [data-testid="stDecoration"] { display: none; }
 
-/* 3. الخلفية */
+/* 3. الخلفية العامة */
 .stApp {
     background-color: #050505;
     background-image: 
@@ -48,11 +49,25 @@ header[data-testid="stHeader"] { background-color: transparent !important; z-ind
     color: #ffffff;
 }
 
-/* 4. السايد بار */
-section[data-testid="stSidebar"] { background-color: #0a0a0f !important; border-right: 1px solid #1f2937; }
+/* 4. إصلاح القائمة الجانبية (Sidebar) للأندرويد */
+section[data-testid="stSidebar"] {
+    background-color: #0a0a0f !important;
+    border-right: 1px solid #1f2937;
+}
+section[data-testid="stSidebar"] h1, 
+section[data-testid="stSidebar"] h2, 
+section[data-testid="stSidebar"] h3, 
+section[data-testid="stSidebar"] span, 
+section[data-testid="stSidebar"] div {
+    color: #ffffff !important; /* فرض اللون الأبيض */
+}
 
-/* 5. تحسينات النصوص */
-[data-testid="stMetricValue"], [data-testid="stMetricLabel"] { color: white !important; }
+/* 5. تحسينات الموبايل العامة (فرض التباين) */
+@media (max-width: 600px) {
+    [data-testid="stMetricValue"], [data-testid="stMetricLabel"] { color: white !important; }
+    .stDataFrame { background: rgba(255,255,255,0.05) !important; border-radius: 10px; }
+    h1, h2, h3 { text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+}
 
 /* 6. الأزرار */
 div.stButton > button {
@@ -71,9 +86,8 @@ div.stButton > button {
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 3. قاعدة البيانات (تم التصفير)
+# 3. قاعدة البيانات
 # ---------------------------------------------------------
-# غيرنا الاسم لضمان قاعدة بيانات جديدة وفارغة
 DB_FILE = 'smart_backlog_clean.db'
 
 def get_connection():
@@ -85,17 +99,11 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, name TEXT, role TEXT)''')
     c.execute('''CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, user TEXT, subject TEXT, units INTEGER, difficulty INTEGER, priority INTEGER, due_date DATE, is_completed BOOLEAN)''')
     c.execute('''CREATE TABLE IF NOT EXISTS attachments (id INTEGER PRIMARY KEY AUTOINCREMENT, file_name TEXT, file_type TEXT, file_content BLOB, is_real BOOLEAN, upload_date DATE)''')
-    
-    # إضافة المستخدمين الأساسيين فقط
     try:
         c.execute("INSERT OR IGNORE INTO users VALUES (?, ?, ?, ?)", ('admin', '123', 'مدير النظام', 'admin'))
         c.execute("INSERT OR IGNORE INTO users VALUES (?, ?, ?, ?)", ('student', '123', 'عبدالخالق', 'student'))
     except: pass
-    
-    # تم حذف كود إضافة الملفات الوهمية
     conn.commit(); conn.close()
-
-# تم حذف دالة inject_starting_data بالكامل لتصفير المواد
 
 init_db()
 
@@ -132,7 +140,6 @@ def add_task_db(user, subj, units, diff, d_date):
                  (user, subj, units, diff, prio, d_date, False))
     conn.commit(); conn.close()
 
-# دالة الحذف الحقيقية (تحذف بناءً على ID لضمان الدقة)
 def delete_task_by_id(task_id):
     conn = get_connection()
     conn.execute("DELETE FROM tasks WHERE id=?", (task_id,))
@@ -192,6 +199,11 @@ def render_progress(pct):
     </div>
     """, unsafe_allow_html=True)
 
+# دالة مساعدة لأسماء الأيام بالعربي
+def get_arabic_day_name(dt):
+    days = {'Saturday': 'السبت', 'Sunday': 'الأحد', 'Monday': 'الاثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء', 'Thursday': 'الخميس', 'Friday': 'الجمعة'}
+    return days.get(dt.strftime("%A"), dt.strftime("%A"))
+
 def main_app():
     user = st.session_state.user
     role = user['role']
@@ -204,6 +216,7 @@ def main_app():
         </div>
         """, unsafe_allow_html=True)
         
+        # ألوان واضحة للقائمة
         opts = ["لوحة التحكم", "الجدول اليومي", "غرفة الإنقاذ", "المكتبة"]
         icons = ['speedometer2', 'calendar-check', 'life-preserver', 'collection']
         if role == 'admin': opts.insert(1, "إدارة المستخدمين"); icons.insert(1, "people")
@@ -211,8 +224,9 @@ def main_app():
         menu = option_menu("القائمة", opts, icons=icons, menu_icon="list", default_index=0, 
             styles={
                 "container": {"background-color": "transparent"}, 
-                "nav-link": {"color": "#ddd", "font-size": "16px", "margin": "5px 0"},
+                "nav-link": {"color": "white", "font-size": "16px", "margin": "5px 0"}, # لون أبيض صريح
                 "nav-link-selected": {"background-color": "#2563eb", "color": "white", "font-weight":"bold"},
+                "icon": {"color": "#38bdf8", "font-size": "18px"},
             })
         st.write("---"); 
         if st.button("🚪 خروج"): st.session_state.logged_in = False; st.rerun()
@@ -224,61 +238,92 @@ def main_app():
         if not tasks.empty:
             done = len(tasks[tasks['is_completed']==True]); total = len(tasks); pct = (done/total*100) if total > 0 else 0
             
+            # 1. شريط الإنجاز والعدادات
             render_progress(pct)
-            
             c1, c2, c3 = st.columns(3)
             with c1: st.markdown(f"<div style='background:rgba(255,255,255,0.05);padding:15px;border-radius:15px;text-align:center'><h3>📝 الكل</h3><h2>{total}</h2></div>", unsafe_allow_html=True)
             with c2: st.markdown(f"<div style='background:rgba(255,255,255,0.05);padding:15px;border-radius:15px;text-align:center;color:#4ade80'><h3>✅ تم</h3><h2>{done}</h2></div>", unsafe_allow_html=True)
             with c3: st.markdown(f"<div style='background:rgba(255,255,255,0.05);padding:15px;border-radius:15px;text-align:center;color:#f87171'><h3>🔥 باقي</h3><h2>{total-done}</h2></div>", unsafe_allow_html=True)
             
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                tasks['Subject_Main'] = tasks['subject'].apply(lambda x: x.split('-')[0].strip())
-                cnt = tasks['Subject_Main'].value_counts().reset_index()
-                cnt.columns = ['المادة', 'العدد']
-                
-                fig_bar = px.bar(cnt, x='المادة', y='العدد', 
-                                 title="🎨 توزيع المواد",
-                                 color='المادة', text='العدد', template='plotly_dark')
-                
-                fig_bar.update_layout(
-                    paper_bgcolor="rgba(255,255,255,0.05)",
-                    plot_bgcolor="rgba(0,0,0,0)",
-                    font_color="white",
-                    showlegend=False,
-                    title_font_size=20,
-                    margin=dict(t=50, l=20, r=20, b=20)
-                )
-                st.plotly_chart(fig_bar, use_container_width=True)
+            st.markdown("---")
 
-            with col2:
+            # 2. الجدول الأسبوعي الذكي (بديل الرسم البياني)
+            col_sched, col_pie = st.columns([2, 1]) # الجدول يأخذ مساحة أكبر
+            
+            with col_sched:
+                st.subheader("📅 خطة الأسبوع الحالي")
+                
+                # تحضير بيانات الجدول الأسبوعي
+                today = date.today()
+                week_data = []
+                
+                # إنشاء سجل للـ 7 أيام القادمة
+                for i in range(7):
+                    current_day = today + timedelta(days=i)
+                    day_name = get_arabic_day_name(current_day)
+                    
+                    # البحث عن مهام هذا اليوم
+                    day_tasks = tasks[tasks['due_date'] == current_day]
+                    
+                    if not day_tasks.empty:
+                        # جلب أهم مادة (أعلى أولوية)
+                        top_task = day_tasks.sort_values(by='priority', ascending=False).iloc[0]['subject']
+                        count = len(day_tasks)
+                        status = "✅" if day_tasks['is_completed'].all() else "⏳"
+                    else:
+                        top_task = "---"
+                        count = 0
+                        status = "راحة 💤"
+                    
+                    week_data.append({
+                        "اليوم": day_name,
+                        "التاريخ": current_day,
+                        "عدد المهام": count,
+                        "ابدأ بـ (الأهم)": top_task,
+                        "الحالة": status
+                    })
+                
+                df_week = pd.DataFrame(week_data)
+                
+                # عرض الجدول بتنسيق جميل
+                st.dataframe(
+                    df_week,
+                    column_config={
+                        "اليوم": st.column_config.TextColumn("اليوم", width="small"),
+                        "التاريخ": st.column_config.DateColumn("التاريخ", format="DD/MM"),
+                        "عدد المهام": st.column_config.ProgressColumn("الضغط الدراسي", min_value=0, max_value=5, format="%d"),
+                        "ابدأ بـ (الأهم)": st.column_config.TextColumn("🎯 التركيز على", width="large"),
+                        "الحالة": st.column_config.TextColumn("الحالة", width="small"),
+                    },
+                    hide_index=True,
+                    use_container_width=True
+                )
+
+            with col_pie:
+                st.subheader("🎯 نسبة الإنجاز")
                 pie_data = tasks['is_completed'].map({True: 'تم الإنجاز', False: 'معلق'}).value_counts().reset_index()
                 pie_data.columns = ['الحالة', 'العدد']
                 
                 fig_pie = px.pie(pie_data, values='العدد', names='الحالة', 
-                                 title="🎯 نسبة الإنجاز",
-                                 hole=0.5, 
+                                 hole=0.6, 
                                  color='الحالة',
                                  color_discrete_map={'تم الإنجاز': '#22c55e', 'معلق': '#ef4444'},
                                  template='plotly_dark')
                 
                 fig_pie.update_layout(
-                    paper_bgcolor="rgba(255,255,255,0.05)",
+                    paper_bgcolor="rgba(0,0,0,0)",
                     plot_bgcolor="rgba(0,0,0,0)",
                     font_color="white",
-                    title_font_size=20,
-                    margin=dict(t=50, l=20, r=20, b=20)
+                    showlegend=False,
+                    margin=dict(t=20, l=10, r=10, b=10)
                 )
-                fig_pie.update_traces(textinfo='percent+label', textfont_size=14)
+                fig_pie.update_traces(textinfo='percent+label')
                 st.plotly_chart(fig_pie, use_container_width=True)
-        else:
-            # رسالة ترحيبية عند عدم وجود بيانات
-            st.info("👋 أهلاً بك! البيانات فارغة حالياً. اذهب إلى 'غرفة الإنقاذ' لإضافة خطتك الأولى.")
+                
+        else: st.info("👋 أهلاً بك! البيانات فارغة حالياً. اذهب إلى 'غرفة الإنقاذ' لإضافة خطتك الأولى.")
 
     elif menu == "الجدول اليومي":
-        st.title("🗓️ جدول الأولويات")
+        st.title("🗓️ إدارة المهام اليومية")
         tasks = get_tasks(role, user['username'])
         if not tasks.empty:
             filter_option = st.selectbox("🌪️ تصفية العرض:", ["الكل", "المعلق (Pending)", "المنجز (Done)"])
@@ -314,7 +359,6 @@ def main_app():
         
         col_add, col_del = st.columns(2)
 
-        # 1. العمود الأيمن: إضافة مادة
         with col_add:
             st.markdown("""
             <div class='glass-card'>
@@ -341,7 +385,6 @@ def main_app():
                         add_task_db(user['username'], f"مذاكرة {subj} - جزء {i+1} (إنقاذ)", 1, diff, date.today()+timedelta(days=i))
                     time.sleep(1.5); st.rerun()
 
-        # 2. العمود الأيسر: حذف مادة (حقيقي الآن)
         with col_del:
             st.markdown("""
             <div class='glass-card' style='border-color:rgba(248, 113, 113, 0.3)'>
@@ -352,9 +395,7 @@ def main_app():
             
             my_tasks = get_tasks(role, user['username'])
             if not my_tasks.empty:
-                # إنشاء قائمة خيارات تحتوي على الاسم + التاريخ لتمييز المهام
                 task_options = {f"{row['subject']} (بتاريخ: {row['due_date']})": row['id'] for i, row in my_tasks.iterrows()}
-                
                 selected_task_label = st.selectbox("🔻 اختر المهمة لحذفها:", list(task_options.keys()))
                 
                 if st.button("❌ حذف المحدد نهائياً", type="primary"):
@@ -391,8 +432,7 @@ def main_app():
                         if file_data:
                             st.download_button("📥 تحميل", data=file_data[0], file_name=file_data[1], mime=row['file_type'], key=f"dl_{row['id']}")
                     else: st.button("📥 تحميل", key=f"fake_{row['id']}", disabled=True)
-        else:
-            st.info("المكتبة فارغة.")
+        else: st.info("المكتبة فارغة.")
 
     elif menu == "إدارة المستخدمين" and role == 'admin':
         st.title("👮 لوحة المدير")
