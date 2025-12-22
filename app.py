@@ -16,9 +16,9 @@ from streamlit_lottie import st_lottie
 st.set_page_config(page_title="SmartBacklog - المبدع الصغير", page_icon="🎓", layout="wide")
 
 # ---------------------------------------------------------
-# 2. قاعدة البيانات (SQLite) - (نفس المنطق الثابت)
+# 2. قاعدة البيانات (SQLite)
 # ---------------------------------------------------------
-DB_FILE = 'smart_backlog_v4.db'
+DB_FILE = 'smart_backlog_v5.db' # تحديث الاسم لضمان نسخة جديدة
 
 def get_connection():
     return sqlite3.connect(DB_FILE, check_same_thread=False)
@@ -30,25 +30,61 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, user TEXT, subject TEXT, units INTEGER, difficulty INTEGER, priority INTEGER, due_date DATE, is_completed BOOLEAN)''')
     c.execute('''CREATE TABLE IF NOT EXISTS attachments (id INTEGER PRIMARY KEY AUTOINCREMENT, file_name TEXT, file_type TEXT, file_content BLOB, is_real BOOLEAN, upload_date DATE)''')
     
+    # إضافة المستخدمين الافتراضيين
     try:
         c.execute("INSERT OR IGNORE INTO users VALUES (?, ?, ?, ?)", ('admin', '123', 'مدير النظام', 'admin'))
         c.execute("INSERT OR IGNORE INTO users VALUES (?, ?, ?, ?)", ('student', '123', 'عبدالخالق', 'student'))
     except: pass
 
-    # حقن بيانات وهمية للمسابقة (للمنظر)
+    # حقن بيانات الملفات الوهمية (كما طلبت سابقاً)
     c.execute("SELECT count(*) FROM attachments")
-    if c.fetchone()[0] < 20:
+    if c.fetchone()[0] < 5:
         subjects = ["الفيزياء", "الكيمياء", "العربي", "الإنجليزي"]
         types = ["PDF", "Image"]
-        for i in range(25):
+        for i in range(10):
             subj = random.choice(subjects)
             c.execute("INSERT INTO attachments (file_name, file_type, file_content, is_real, upload_date) VALUES (?, ?, ?, ?, ?)",
-                      (f"ملف {subj} {i+1}", random.choice(types), None, False, date.today()))
+                      (f"ملف مراجعة {subj} {i+1}", random.choice(types), None, False, date.today()))
+    
     conn.commit(); conn.close()
 
-init_db()
+# --- دالة حقن الـ 10 مواد الدراسية (الإضافة الجديدة) ---
+def inject_starting_data():
+    conn = get_connection()
+    c = conn.cursor()
+    # نتحقق هل الطالب لديه مهام؟ إذا لا، نضيف الـ 10 مواد
+    c.execute("SELECT count(*) FROM tasks WHERE user='student'")
+    if c.fetchone()[0] == 0:
+        today = date.today()
+        # قائمة المواد: (الاسم، الوحدات، الصعوبة، موعد التسليم بعد كم يوم)
+        starting_tasks = [
+            ("الفيزياء الحديثة - الفصل الخامس", 3, 8, 4),
+            ("الكيمياء العضوية - الهيدروكربونات", 5, 9, 7),
+            ("التفاضل - معدلات زمنية مرتبطة", 2, 7, 3),
+            ("اللغة العربية - مراجعة النحو", 1, 5, 2),
+            ("الإنجليزي - Unit 5 Vocabulary", 2, 4, 5),
+            ("الجيولوجيا - الباب الثالث (صخور)", 4, 6, 6),
+            ("الفيزياء الكهربية - كيرشوف", 3, 9, 8),
+            ("الإحصاء - الاحتمالات", 2, 3, 10),
+            ("اللغة الفرنسية - مراجعة عامة", 1, 2, 12),
+            ("الأحياء - البيولوجيا الجزيئية (DNA)", 4, 8, 5)
+        ]
+        
+        for subj, units, diff, days_add in starting_tasks:
+            d_date = today + timedelta(days=days_add)
+            # حساب الأولوية بنفس معادلة غرفة الإنقاذ
+            prio = int((diff * units * 10) / max((d_date - today).days, 1))
+            c.execute("INSERT INTO tasks (user, subject, units, difficulty, priority, due_date, is_completed) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                      ('student', subj, units, diff, prio, d_date, False))
+        
+        conn.commit()
+    conn.close()
 
-# --- دوال البيانات ---
+# تشغيل الدوال الابتدائية
+init_db()
+inject_starting_data()
+
+# --- بقية دوال البيانات ---
 def register_user(username, password, name):
     conn = get_connection()
     try:
@@ -116,7 +152,7 @@ def load_lottie(url):
     except: return None
 
 # ---------------------------------------------------------
-# 3. التنسيق (CSS) - (نفس التصميم الإبداعي المحافظ عليه)
+# 3. التنسيق (CSS)
 # ---------------------------------------------------------
 st.markdown("""
 <style>
@@ -164,9 +200,7 @@ div.stButton > button:hover { transform: translateY(-2px); box-shadow: 0 6px 20p
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
 }
-.metric-card {
-    text-align: center; border-right: 1px solid rgba(255,255,255,0.1);
-}
+.metric-card { text-align: center; border-right: 1px solid rgba(255,255,255,0.1); }
 
 /* المدخلات */
 input, .stTextInput > div > div > input, .stDateInput > div > div > input {
@@ -217,19 +251,64 @@ def main_app():
         tasks = get_tasks(role, user['username'])
         if not tasks.empty:
             done = len(tasks[tasks['is_completed']==True]); total = len(tasks); pct = (done/total*100) if total > 0 else 0
+            
+            # عرض شريط التقدم والأرقام
             st.markdown('<div class="glass-card">', unsafe_allow_html=True); render_progress(pct)
-            c1, c2, c3 = st.columns(3); c1.metric("الكل", total); c2.metric("تم", done); c3.metric("باقي", total - done); st.markdown('</div>', unsafe_allow_html=True)
+            c1, c2, c3 = st.columns(3); c1.metric("📚 إجمالي المهام", total); c2.metric("✅ المكتملة", done); c3.metric("⏳ المتبقية", total - done); st.markdown('</div>', unsafe_allow_html=True)
+            
+            # --- تعديل الرسوم البيانية (التفاعلية والجمال) ---
             col1, col2 = st.columns(2)
-            with col1: st.subheader("توزيع المواد"); cnt = tasks['subject'].apply(lambda x: x.split('-')[0]).value_counts().reset_index(); cnt.columns = ['المادة', 'العدد']; st.plotly_chart(px.bar(cnt, x='المادة', y='العدد', template="plotly_dark", color='العدد'), use_container_width=True)
-            with col2: st.subheader("حالة المهام"); st.plotly_chart(px.pie(tasks, names='is_completed', template="plotly_dark", hole=0.5, color_discrete_sequence=['#ef4444', '#22c55e']), use_container_width=True)
-        else: st.info("ابدأ بإضافة مهام.")
+            
+            with col1:
+                st.markdown("#### 📂 توزيع المواد")
+                # معالجة البيانات: استخراج اسم المادة فقط (بدون التفاصيل)
+                tasks['Subject_Main'] = tasks['subject'].apply(lambda x: x.split('-')[0].strip())
+                cnt = tasks['Subject_Main'].value_counts().reset_index()
+                cnt.columns = ['المادة', 'العدد']
+                
+                # رسم بياني محسن (شفاف + ألوان نيون)
+                fig_bar = px.bar(cnt, x='المادة', y='العدد', 
+                                 text='العدد',
+                                 color='العدد',
+                                 color_continuous_scale='Viridis') # تدرج لوني جذاب
+                
+                fig_bar.update_layout(
+                    plot_bgcolor="rgba(0,0,0,0)", 
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    font_color="white",
+                    xaxis=dict(showgrid=False),
+                    yaxis=dict(showgrid=False)
+                )
+                st.plotly_chart(fig_bar, use_container_width=True)
+
+            with col2:
+                st.markdown("#### 🍩 نسبة الإنجاز")
+                # تحويل القيم المنطقية لنصوص للعرض
+                pie_data = tasks['is_completed'].map({True: 'منجز', False: 'معلق'}).value_counts().reset_index()
+                pie_data.columns = ['الحالة', 'العدد']
+                
+                # رسم دائري مجوف مع ألوان مخصصة
+                fig_pie = px.pie(pie_data, values='العدد', names='الحالة', 
+                                 hole=0.6, 
+                                 color='الحالة',
+                                 color_discrete_map={'منجز': '#2ecc71', 'معلق': '#e74c3c'})
+                
+                fig_pie.update_traces(textinfo='percent+label', textfont_size=14)
+                fig_pie.update_layout(
+                    plot_bgcolor="rgba(0,0,0,0)", 
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    font_color="white",
+                    showlegend=True
+                )
+                st.plotly_chart(fig_pie, use_container_width=True)
+                
+        else: st.info("جاري تحميل بياناتك الدراسية...")
 
     elif menu == "الجدول اليومي":
         st.title("🗓️ إدارة المهام الذكية")
         tasks = get_tasks(role, user['username'])
         
         if not tasks.empty:
-            # --- ميزة 1: إحصائية سريعة لليوم ---
             today_tasks = tasks[tasks['due_date'] == date.today()]
             today_count = len(today_tasks)
             today_done = len(today_tasks[today_tasks['is_completed']==True])
@@ -242,18 +321,15 @@ def main_app():
             </div>
             """, unsafe_allow_html=True)
 
-            # --- ميزة 2: الفلاتر (جعل الأزرار حقيقية ومفيدة) ---
             col_filter, col_space = st.columns([2, 4])
             with col_filter:
                 filter_option = st.selectbox("🌪️ تصفية المهام:", ["عرض الكل", "المهام المعلقة (Pending)", "المهام المنجزة (Done)"])
 
-            # تطبيق الفلتر
             if filter_option == "المهام المعلقة (Pending)":
                 tasks = tasks[tasks['is_completed'] == False]
             elif filter_option == "المهام المنجزة (Done)":
                 tasks = tasks[tasks['is_completed'] == True]
 
-            # ترتيب وعرض الجدول
             tasks = tasks.sort_values(by=['is_completed', 'priority'], ascending=[True, False]).reset_index(drop=True)
             
             edited = st.data_editor(
@@ -263,7 +339,7 @@ def main_app():
                     "subject": st.column_config.TextColumn("تفاصيل المهمة", width="large"),
                     "priority": st.column_config.ProgressColumn("الأهمية 🔥", min_value=0, max_value=100, format="%f"),
                     "due_date": st.column_config.DateColumn("تاريخ التنفيذ"),
-                    "id": None, "user": None, "units": None, "difficulty": None
+                    "id": None, "user": None, "units": None, "difficulty": None, "Subject_Main": None
                 },
                 column_order=["is_completed", "subject", "priority", "due_date"],
                 disabled=["subject", "priority", "due_date"],
@@ -272,12 +348,10 @@ def main_app():
                 key="tasks_editor"
             )
             
-            # زر حفظ حقيقي
             if st.button("💾 حفظ التحديثات الآن"):
                 conn = get_connection()
                 changes_count = 0
                 for i, row in edited.iterrows():
-                    # تحديث الحالة فقط
                     conn.execute("UPDATE tasks SET is_completed=? WHERE id=?", (row['is_completed'], row['id']))
                     changes_count += 1
                 conn.commit(); conn.close()
@@ -286,7 +360,7 @@ def main_app():
                     time.sleep(1)
                     st.rerun()
         else:
-            st.info("جدولك نظيف! اذهب لغرفة الإنقاذ لإضافة خطة جديدة.")
+            st.info("لا توجد مهام حالياً.")
 
     elif menu == "غرفة الإنقاذ":
         st.title("🚑 غرفة عمليات الإنقاذ (AI Planner)")
@@ -311,7 +385,6 @@ def main_app():
 
             if submit:
                 if subj:
-                    # محاكاة التفكير (Visual Effect)
                     progress_text = "جاري تحليل الوقت المتاح..."
                     my_bar = st.progress(0, text=progress_text)
                     for percent_complete in range(100):
@@ -319,11 +392,9 @@ def main_app():
                         my_bar.progress(percent_complete + 1, text="جاري توزيع المهام بذكاء...")
                     my_bar.empty()
 
-                    # المنطق الحقيقي
                     days = (d_date - date.today()).days
                     quota = math.ceil(num / max(days, 1))
                     
-                    # عرض بطاقة ملخص قبل الحفظ
                     st.success(f"تمت الموافقة على الخطة! سيتم إضافة {num} مهام لجدولك.")
                     st.markdown(f"""
                     <div class='glass-card' style='border-color: #22c55e'>
@@ -336,7 +407,6 @@ def main_app():
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # التنفيذ في الداتابيز
                     for i in range(min(days, num)):
                         add_task_db(user['username'], f"مذاكرة {subj} - جزء {i+1} (إنقاذ)", 1, diff, date.today()+timedelta(days=i))
                     
@@ -408,7 +478,7 @@ def login_page():
                 user = login_user(u, p)
                 if user: st.session_state.logged_in = True; st.session_state.user = user; st.rerun()
                 else: st.error("خطأ")
-            st.caption("للتجربة: admin / 123")
+            st.caption("للتجربة: student / 123")
             
         with tab2:
             nu = st.text_input("اسم مستخدم جديد", key="r_u"); nn = st.text_input("الاسم", key="r_n"); np = st.text_input("كلمة السر", type="password", key="r_p")
