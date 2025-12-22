@@ -16,41 +16,30 @@ from streamlit_lottie import st_lottie
 st.set_page_config(page_title="SmartBacklog", page_icon="🚀", layout="wide")
 
 # ---------------------------------------------------------
-# 2. التنسيق (Clean & Stable CSS)
+# 2. التنسيق (النسخة المستقرة والنظيفة)
 # ---------------------------------------------------------
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;900&display=swap');
 
-/* 1. تطبيق الخط العربي على النصوص فقط */
+/* 1. الخطوط */
 html, body, p, div, h1, h2, h3, h4, h5, h6, span, a, label, button, input, textarea {
     font-family: 'Cairo', sans-serif !important;
 }
-
-/* 2. إصلاح الأيقونات */
-.material-icons, 
-.st-emotion-cache-1pbqwg9, 
-[data-testid="stSidebarCollapsedControl"] {
+.material-icons, .st-emotion-cache-1pbqwg9, [data-testid="stSidebarCollapsedControl"] {
     font-family: 'Material Icons', sans-serif !important;
 }
 
-/* 3. تنسيق الهيدر وزر القائمة */
-header[data-testid="stHeader"] {
-    background-color: transparent !important;
-    z-index: 1000 !important;
-}
+/* 2. الهيدر وزر القائمة */
+header[data-testid="stHeader"] { background-color: transparent !important; z-index: 1000 !important; }
 [data-testid="stSidebarCollapsedControl"] {
-    color: white !important;
-    background-color: rgba(255,255,255,0.1) !important;
-    border-radius: 8px;
-    padding: 5px;
+    color: white !important; background-color: rgba(255,255,255,0.1) !important;
+    border-radius: 8px; padding: 5px;
 }
-[data-testid="stSidebarCollapsedControl"]:hover {
-    background-color: #2563eb !important;
-}
+[data-testid="stSidebarCollapsedControl"]:hover { background-color: #2563eb !important; }
 [data-testid="stDecoration"] { display: none; }
 
-/* 4. الخلفية العامة */
+/* 3. الخلفية */
 .stApp {
     background-color: #050505;
     background-image: 
@@ -59,40 +48,33 @@ header[data-testid="stHeader"] {
     color: #ffffff;
 }
 
-/* 5. تنسيق السايد بار */
-section[data-testid="stSidebar"] {
-    background-color: #0a0a0f !important;
-    border-right: 1px solid #1f2937;
-}
+/* 4. السايد بار */
+section[data-testid="stSidebar"] { background-color: #0a0a0f !important; border-right: 1px solid #1f2937; }
 
-/* 6. تحسينات الموبايل */
-[data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
-    color: white !important;
-}
+/* 5. تحسينات النصوص */
+[data-testid="stMetricValue"], [data-testid="stMetricLabel"] { color: white !important; }
 
-/* 7. تنسيق الأزرار */
+/* 6. الأزرار */
 div.stButton > button {
     background: linear-gradient(90deg, #2563eb, #7c3aed);
     color: white; border: none; padding: 12px; border-radius: 12px;
     font-weight: bold; width: 100%;
 }
 
-/* 8. تنسيق الكروت الزجاجية */
+/* 7. الكروت الزجاجية */
 .glass-card {
-    background: rgba(30, 41, 59, 0.6);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 15px;
-    padding: 20px;
-    margin-bottom: 20px;
+    background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px;
+    padding: 20px; margin-bottom: 20px;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 3. قاعدة البيانات
+# 3. قاعدة البيانات (تم التصفير)
 # ---------------------------------------------------------
-DB_FILE = 'smart_backlog_v5.db'
+# غيرنا الاسم لضمان قاعدة بيانات جديدة وفارغة
+DB_FILE = 'smart_backlog_clean.db'
 
 def get_connection():
     return sqlite3.connect(DB_FILE, check_same_thread=False)
@@ -103,48 +85,19 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, name TEXT, role TEXT)''')
     c.execute('''CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, user TEXT, subject TEXT, units INTEGER, difficulty INTEGER, priority INTEGER, due_date DATE, is_completed BOOLEAN)''')
     c.execute('''CREATE TABLE IF NOT EXISTS attachments (id INTEGER PRIMARY KEY AUTOINCREMENT, file_name TEXT, file_type TEXT, file_content BLOB, is_real BOOLEAN, upload_date DATE)''')
+    
+    # إضافة المستخدمين الأساسيين فقط
     try:
         c.execute("INSERT OR IGNORE INTO users VALUES (?, ?, ?, ?)", ('admin', '123', 'مدير النظام', 'admin'))
         c.execute("INSERT OR IGNORE INTO users VALUES (?, ?, ?, ?)", ('student', '123', 'عبدالخالق', 'student'))
     except: pass
-    c.execute("SELECT count(*) FROM attachments")
-    if c.fetchone()[0] < 5:
-        subjects = ["الفيزياء", "الكيمياء", "العربي", "الإنجليزي"]
-        types = ["PDF", "Image"]
-        for i in range(10):
-            subj = random.choice(subjects)
-            c.execute("INSERT INTO attachments (file_name, file_type, file_content, is_real, upload_date) VALUES (?, ?, ?, ?, ?)",
-                      (f"ملف مراجعة {subj} {i+1}", random.choice(types), None, False, date.today()))
+    
+    # تم حذف كود إضافة الملفات الوهمية
     conn.commit(); conn.close()
 
-def inject_starting_data():
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute("SELECT count(*) FROM tasks WHERE user='student'")
-    if c.fetchone()[0] == 0:
-        today = date.today()
-        starting_tasks = [
-            ("الفيزياء الحديثة - الفصل الخامس", 3, 8, 4),
-            ("الكيمياء العضوية - الهيدروكربونات", 5, 9, 7),
-            ("التفاضل - معدلات زمنية مرتبطة", 2, 7, 3),
-            ("اللغة العربية - مراجعة النحو", 1, 5, 2),
-            ("الإنجليزي - Unit 5 Vocabulary", 2, 4, 5),
-            ("الجيولوجيا - الباب الثالث (صخور)", 4, 6, 6),
-            ("الفيزياء الكهربية - كيرشوف", 3, 9, 8),
-            ("الإحصاء - الاحتمالات", 2, 3, 10),
-            ("اللغة الفرنسية - مراجعة عامة", 1, 2, 12),
-            ("الأحياء - البيولوجيا الجزيئية (DNA)", 4, 8, 5)
-        ]
-        for subj, units, diff, days_add in starting_tasks:
-            d_date = today + timedelta(days=days_add)
-            prio = int((diff * units * 10) / max((d_date - today).days, 1))
-            c.execute("INSERT INTO tasks (user, subject, units, difficulty, priority, due_date, is_completed) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                      ('student', subj, units, diff, prio, d_date, False))
-        conn.commit()
-    conn.close()
+# تم حذف دالة inject_starting_data بالكامل لتصفير المواد
 
 init_db()
-inject_starting_data()
 
 # --- دوال البيانات ---
 def register_user(username, password, name):
@@ -179,10 +132,10 @@ def add_task_db(user, subj, units, diff, d_date):
                  (user, subj, units, diff, prio, d_date, False))
     conn.commit(); conn.close()
 
-# دالة الحذف الجديدة
-def delete_task_db(user, task_name):
+# دالة الحذف الحقيقية (تحذف بناءً على ID لضمان الدقة)
+def delete_task_by_id(task_id):
     conn = get_connection()
-    conn.execute("DELETE FROM tasks WHERE user=? AND subject=?", (user, task_name))
+    conn.execute("DELETE FROM tasks WHERE id=?", (task_id,))
     conn.commit(); conn.close()
 
 def upload_file_db(name, type, content):
@@ -320,8 +273,9 @@ def main_app():
                 )
                 fig_pie.update_traces(textinfo='percent+label', textfont_size=14)
                 st.plotly_chart(fig_pie, use_container_width=True)
-                
-        else: st.info("لا توجد بيانات.. ابدأ بإضافة مهام!")
+        else:
+            # رسالة ترحيبية عند عدم وجود بيانات
+            st.info("👋 أهلاً بك! البيانات فارغة حالياً. اذهب إلى 'غرفة الإنقاذ' لإضافة خطتك الأولى.")
 
     elif menu == "الجدول اليومي":
         st.title("🗓️ جدول الأولويات")
@@ -353,20 +307,19 @@ def main_app():
                     changes += 1
                 conn.commit(); conn.close()
                 if changes > 0: st.toast("تم الحفظ بنجاح! استمر يا بطل 💪", icon="✅"); time.sleep(1); st.rerun()
-        else: st.info("جدولك فارغ! اذهب لغرفة الإنقاذ.")
+        else: st.info("جدولك نظيف! اذهب لغرفة الإنقاذ لإضافة مهام.")
 
     elif menu == "غرفة الإنقاذ":
         st.title("🚑 غرفة عمليات الإنقاذ (AI Planner)")
         
-        # --- تقسيم الصفحة لعمودين: إضافة وحذف ---
         col_add, col_del = st.columns(2)
 
-        # 1. العمود الأيمن: إضافة مادة (الكود القديم)
+        # 1. العمود الأيمن: إضافة مادة
         with col_add:
             st.markdown("""
             <div class='glass-card'>
                 <h4>➕ إضافة خطة دراسية</h4>
-                <p style='color:#aaa; font-size:0.9em;'>سيقوم الذكاء الاصطناعي بتوزيع المنهج تلقائياً.</p>
+                <p style='color:#aaa; font-size:0.9em;'>أضف موادك وسيقوم النظام بتوزيعها بذكاء.</p>
             </div>
             """, unsafe_allow_html=True)
             
@@ -377,7 +330,7 @@ def main_app():
                 d_date = st.date_input("🗓️ تاريخ الانتهاء", min_value=date.today() + timedelta(days=1))
                 
                 st.markdown("<br>", unsafe_allow_html=True)
-                submit = st.form_submit_button("🚀 تفعيل الخطة")
+                submit = st.form_submit_button("🚀 إضافة الخطة")
                 
                 if submit and subj:
                     with st.spinner('جاري تحليل الجدول...'): time.sleep(1)
@@ -388,22 +341,26 @@ def main_app():
                         add_task_db(user['username'], f"مذاكرة {subj} - جزء {i+1} (إنقاذ)", 1, diff, date.today()+timedelta(days=i))
                     time.sleep(1.5); st.rerun()
 
-        # 2. العمود الأيسر: حذف مادة (الكود الجديد)
+        # 2. العمود الأيسر: حذف مادة (حقيقي الآن)
         with col_del:
             st.markdown("""
-            <div class='glass-card'>
-                <h4>🗑️ حذف المواد والمهام</h4>
-                <p style='color:#aaa; font-size:0.9em;'>تخلص من المواد التي انتهيت منها أو المهام المكررة.</p>
+            <div class='glass-card' style='border-color:rgba(248, 113, 113, 0.3)'>
+                <h4 style='color:#f87171'>🗑️ حذف المواد والمهام</h4>
+                <p style='color:#aaa; font-size:0.9em;'>تخلص من المواد التي انتهيت منها نهائياً.</p>
             </div>
             """, unsafe_allow_html=True)
             
             my_tasks = get_tasks(role, user['username'])
             if not my_tasks.empty:
-                task_to_del = st.selectbox("🔻 اختر المهمة/المادة لحذفها:", my_tasks['subject'].unique())
+                # إنشاء قائمة خيارات تحتوي على الاسم + التاريخ لتمييز المهام
+                task_options = {f"{row['subject']} (بتاريخ: {row['due_date']})": row['id'] for i, row in my_tasks.iterrows()}
+                
+                selected_task_label = st.selectbox("🔻 اختر المهمة لحذفها:", list(task_options.keys()))
                 
                 if st.button("❌ حذف المحدد نهائياً", type="primary"):
-                    delete_task_db(user['username'], task_to_del)
-                    st.toast(f"تم حذف {task_to_del} بنجاح!", icon="🗑️")
+                    task_id_to_delete = task_options[selected_task_label]
+                    delete_task_by_id(task_id_to_delete)
+                    st.toast("تم الحذف من قاعدة البيانات!", icon="🗑️")
                     time.sleep(1)
                     st.rerun()
             else:
@@ -418,21 +375,24 @@ def main_app():
                 upload_file_db(up_file.name, up_file.type, bytes_data)
                 st.success("تم الرفع!"); time.sleep(1); st.rerun()
         files = get_files()
-        cols = st.columns(2)
-        for i, row in files.iterrows():
-            with cols[i%2]:
-                icon = "📄" if "pdf" in row['file_type'].lower() else "🖼️"
-                st.markdown(f"""
-                <div style='background:rgba(255,255,255,0.05);padding:15px;border-radius:15px;text-align:center;margin-bottom:10px;border:1px solid rgba(255,255,255,0.1)'>
-                    <h2 style='margin:0'>{icon}</h2>
-                    <h5 style='margin:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis'>{row['file_name']}</h5>
-                </div>
-                """, unsafe_allow_html=True)
-                if row['is_real']:
-                    file_data = get_real_file_content(row['id'])
-                    if file_data:
-                        st.download_button("📥 تحميل", data=file_data[0], file_name=file_data[1], mime=row['file_type'], key=f"dl_{row['id']}")
-                else: st.button("📥 تحميل", key=f"fake_{row['id']}", disabled=True)
+        if not files.empty:
+            cols = st.columns(2)
+            for i, row in files.iterrows():
+                with cols[i%2]:
+                    icon = "📄" if "pdf" in row['file_type'].lower() else "🖼️"
+                    st.markdown(f"""
+                    <div style='background:rgba(255,255,255,0.05);padding:15px;border-radius:15px;text-align:center;margin-bottom:10px;border:1px solid rgba(255,255,255,0.1)'>
+                        <h2 style='margin:0'>{icon}</h2>
+                        <h5 style='margin:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis'>{row['file_name']}</h5>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    if row['is_real']:
+                        file_data = get_real_file_content(row['id'])
+                        if file_data:
+                            st.download_button("📥 تحميل", data=file_data[0], file_name=file_data[1], mime=row['file_type'], key=f"dl_{row['id']}")
+                    else: st.button("📥 تحميل", key=f"fake_{row['id']}", disabled=True)
+        else:
+            st.info("المكتبة فارغة.")
 
     elif menu == "إدارة المستخدمين" and role == 'admin':
         st.title("👮 لوحة المدير")
