@@ -16,29 +16,31 @@ from streamlit_lottie import st_lottie
 st.set_page_config(page_title="SmartBacklog - المبدع الصغير", page_icon="🎓", layout="wide")
 
 # ---------------------------------------------------------
-# 2. التنسيق المتطور (CSS)
+# 2. التنسيق المستقر (Clean CSS)
 # ---------------------------------------------------------
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;900&display=swap');
 
-/* --- 1. الخدعة الذكية لزر القائمة --- */
-/* نجعل زر القائمة الأصلي كبيراً وشفافاً ويغطي منطقة البروفايل في اليسار */
-button[kind="header"] {
-    display: block !important;
-    position: fixed !important;
-    left: 10px !important;    /* محاذاة لليسار فوق البروفايل */
-    top: 10px !important;
-    width: 200px !important;  /* عرض كافٍ لتغطية خانة الاسم */
-    height: 60px !important;  /* ارتفاع كافٍ */
-    opacity: 0 !important;    /* شفاف تماماً (مخفي) */
-    z-index: 100001 !important; /* فوق كل العناصر */
-    cursor: pointer !important; /* يظهر شكل اليد عند المرور */
-}
-
-/* إخفاء خلفية الهيدر */
+/* إخفاء الهيدر الافتراضي المزعج */
 header[data-testid="stHeader"] { background: transparent !important; }
 [data-testid="stDecoration"] { display: none; }
+
+/* تنسيق زر القائمة الأصلي (هامبرغر) ليظهر بشكل جميل */
+button[kind="header"] {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    top: 15px !important; /* ضبط المكان */
+    left: 15px !important;
+    z-index: 99999 !important;
+    transition: all 0.3s;
+}
+button[kind="header"]:hover {
+    background: rgba(37, 99, 235, 0.5) !important; /* لون أزرق عند اللمس */
+    transform: scale(1.05);
+}
 
 /* الخلفية العامة */
 .stApp {
@@ -50,31 +52,30 @@ header[data-testid="stHeader"] { background: transparent !important; }
 }
 * { font-family: 'Cairo', sans-serif !important; }
 
-/* --- 2. عكس أماكن الناف بار --- */
+/* شريط العنوان المخصص */
 .custom-navbar {
     position: fixed; top: 0; left: 0; right: 0; height: 70px;
     background: rgba(20, 20, 30, 0.95);
     backdrop-filter: blur(15px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1); z-index: 9999;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
+    z-index: 9999;
     display: flex; align-items: center; 
-    justify-content: space-between; /* توزيع العناصر على الأطراف */
-    padding: 0 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    justify-content: space-between; /* تباعد العناصر */
+    padding: 0 20px; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
 
-/* البروفايل (على اليسار الآن) */
+/* البروفايل (يسار) - قمنا بإزاحته قليلاً لليمين عشان زر القائمة */
 .navbar-user {
     display: flex; align-items: center; gap: 10px;
     background: rgba(255,255,255,0.1); padding: 5px 15px;
     border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
-    transition: background 0.3s;
-    /* مؤشر بصري أن هذا المكان قابل للضغط */
-    border-left: 3px solid #3b82f6; 
+    margin-left: 50px; /* مسافة لزر القائمة الأصلي */
 }
-.navbar-user:hover { background: rgba(255,255,255,0.2); }
 
-/* اللوجو (على اليمين الآن) */
+/* اللوجو (يمين) */
 .navbar-brand {
-    font-size: 24px; font-weight: 900;
+    font-size: 22px; font-weight: 900;
     background: -webkit-linear-gradient(45deg, #3b82f6, #d946ef);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
@@ -93,13 +94,11 @@ section[data-testid="stSidebar"] {
 
 /* تحسينات الموبايل */
 @media (max-width: 600px) {
-    .custom-navbar { height: 60px; padding: 0 15px; }
-    .navbar-brand { font-size: 20px; }
-    .navbar-user { padding: 5px 10px; }
-    /* ضمان أن الأرقام واضحة */
-    [data-testid="stMetricValue"], [data-testid="stMetricLabel"], p, h1, h2, h3 { color: #ffffff !important; }
-    /* تكبير منطقة اللمس للزر الشفاف */
-    button[kind="header"] { width: 150px !important; height: 60px !important; }
+    .custom-navbar { height: 60px; padding: 0 10px; }
+    .navbar-brand { font-size: 18px; }
+    .navbar-user { padding: 4px 10px; margin-left: 50px; }
+    .navbar-user span { font-size: 1rem; } /* تصغير أيقونة المستخدم قليلاً */
+    div[data-testid="stMetricValue"], div[data-testid="stMetricLabel"] { color: white !important; }
 }
 
 div.stButton > button {
@@ -236,12 +235,13 @@ def load_lottie(url):
     except: return None
 
 # ---------------------------------------------------------
-# 4. التطبيق الرئيسي (تم عكس العناصر هنا)
+# 4. التطبيق الرئيسي
 # ---------------------------------------------------------
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'user' not in st.session_state: st.session_state.user = {}
 
 def render_custom_header(user):
+    # تم إزالة التعليقات والأكواد المعقدة لضمان الاستقرار
     st.markdown(f"""
     <div class="custom-navbar">
         <div class="navbar-user">
@@ -251,10 +251,9 @@ def render_custom_header(user):
                 <div style="font-size: 0.7rem; color: #aaa;">{user['role']}</div>
             </div>
         </div>
-        
         <div class="navbar-brand">SmartBacklog 🚀</div>
     </div>
-    <div style="margin-top: 50px;"></div> 
+    <div style="margin-top: 60px;"></div> 
     """, unsafe_allow_html=True)
 
 def render_progress(pct):
