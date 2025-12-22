@@ -16,30 +16,56 @@ from streamlit_lottie import st_lottie
 st.set_page_config(page_title="SmartBacklog", page_icon="🚀", layout="wide")
 
 # ---------------------------------------------------------
-# 2. التنسيق (Clean & Stable CSS)
+# 2. التنسيق (CSS) - إصلاحات الأندرويد الصارمة
 # ---------------------------------------------------------
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;900&display=swap');
 
-/* 1. الخطوط */
-html, body, p, div, h1, h2, h3, h4, h5, h6, span, a, label, button, input, textarea {
+/* 1. تعميم الخط العربي */
+html, body, p, div, h1, h2, h3, h4, h5, h6, span, a, label, button, input, textarea, li {
     font-family: 'Cairo', sans-serif !important;
 }
+
+/* 2. استثناء الأيقونات من الخط */
 .material-icons, .st-emotion-cache-1pbqwg9, [data-testid="stSidebarCollapsedControl"] {
     font-family: 'Material Icons', sans-serif !important;
 }
 
-/* 2. الهيدر وزر القائمة */
+/* 3. إصلاح القائمة الجانبية (Sidebar) - خاصة للأندرويد */
+section[data-testid="stSidebar"] {
+    background-color: #0a0a0f !important; /* خلفية داكنة جداً */
+    border-right: 1px solid #1f2937;
+}
+
+/* إجبار جميع النصوص داخل السايد بار على اللون الأبيض */
+section[data-testid="stSidebar"] * {
+    color: #ffffff !important;
+}
+
+/* تحسين القائمة المنسدلة (Option Menu) داخل السايد بار */
+.nav-link {
+    color: #e0e0e0 !important; /* لون النص غير المحدد */
+    background-color: transparent !important;
+}
+.nav-link:hover {
+    background-color: rgba(255,255,255,0.1) !important;
+}
+.nav-link-selected {
+    background-color: #2563eb !important; /* لون الخلفية للمحدد */
+    color: #ffffff !important;
+    font-weight: bold !important;
+}
+
+/* 4. الهيدر وزر القائمة */
 header[data-testid="stHeader"] { background-color: transparent !important; z-index: 1000 !important; }
 [data-testid="stSidebarCollapsedControl"] {
     color: white !important; background-color: rgba(255,255,255,0.1) !important;
     border-radius: 8px; padding: 5px;
 }
-[data-testid="stSidebarCollapsedControl"]:hover { background-color: #2563eb !important; }
 [data-testid="stDecoration"] { display: none; }
 
-/* 3. الخلفية العامة */
+/* 5. الخلفية العامة */
 .stApp {
     background-color: #050505;
     background-image: 
@@ -48,34 +74,21 @@ header[data-testid="stHeader"] { background-color: transparent !important; z-ind
     color: #ffffff;
 }
 
-/* 4. إصلاح القائمة الجانبية (Sidebar) للأندرويد */
-section[data-testid="stSidebar"] {
-    background-color: #0a0a0f !important;
-    border-right: 1px solid #1f2937;
-}
-section[data-testid="stSidebar"] h1, 
-section[data-testid="stSidebar"] h2, 
-section[data-testid="stSidebar"] h3, 
-section[data-testid="stSidebar"] span, 
-section[data-testid="stSidebar"] div {
-    color: #ffffff !important;
-}
-
-/* 5. تحسينات الموبايل العامة */
+/* 6. تحسينات عامة للموبايل */
 @media (max-width: 600px) {
     [data-testid="stMetricValue"], [data-testid="stMetricLabel"] { color: white !important; }
+    /* تحسين ظهور الجداول في الموبايل */
     .stDataFrame { background: rgba(255,255,255,0.05) !important; border-radius: 10px; }
-    h1, h2, h3 { text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 }
 
-/* 6. الأزرار */
+/* 7. الأزرار */
 div.stButton > button {
     background: linear-gradient(90deg, #2563eb, #7c3aed);
     color: white; border: none; padding: 12px; border-radius: 12px;
     font-weight: bold; width: 100%;
 }
 
-/* 7. الكروت الزجاجية */
+/* 8. الكروت الزجاجية */
 .glass-card {
     background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px;
@@ -235,7 +248,6 @@ def main_app():
         if not tasks.empty:
             done = len(tasks[tasks['is_completed']==True]); total = len(tasks); pct = (done/total*100) if total > 0 else 0
             
-            # 1. شريط الإنجاز والعدادات
             render_progress(pct)
             c1, c2, c3 = st.columns(3)
             with c1: st.markdown(f"<div style='background:rgba(255,255,255,0.05);padding:15px;border-radius:15px;text-align:center'><h3>📝 الكل</h3><h2>{total}</h2></div>", unsafe_allow_html=True)
@@ -248,74 +260,29 @@ def main_app():
             
             with col_sched:
                 st.subheader("📈 مستوى الضغط الدراسي (7 أيام)")
-                
-                # تحضير بيانات الرسم البياني الخطي
                 today = date.today()
                 week_data = []
-                
                 for i in range(7):
                     current_day = today + timedelta(days=i)
-                    # تنسيق اليوم ليظهر الاسم بالعربي + التاريخ
                     day_label = f"{get_arabic_day_name(current_day)} ({current_day.strftime('%d/%m')})"
-                    
                     day_tasks = tasks[tasks['due_date'] == current_day]
                     count = len(day_tasks)
-                    # أهم مهمة للظهور في التلميح (Hover)
                     top_focus = day_tasks.sort_values(by='priority', ascending=False).iloc[0]['subject'] if not day_tasks.empty else "لا يوجد"
-                    
-                    week_data.append({
-                        "اليوم": day_label,
-                        "التاريخ": current_day,
-                        "عدد المهام": count,
-                        "التركيز على": top_focus
-                    })
+                    week_data.append({"اليوم": day_label, "عدد المهام": count, "التركيز على": top_focus})
                 
                 df_week = pd.DataFrame(week_data)
-                
-                # رسم المخطط السهمي (Line Chart)
-                fig_line = px.line(
-                    df_week, 
-                    x='اليوم', 
-                    y='عدد المهام', 
-                    markers=True, # إضافة نقاط على الخط
-                    template='plotly_dark',
-                    hover_data=['التركيز على'] # إظهار اسم المهمة عند الوقوف بالماوس
-                )
-                
-                # تحسين مظهر الرسم
+                fig_line = px.line(df_week, x='اليوم', y='عدد المهام', markers=True, template='plotly_dark', hover_data=['التركيز على'])
                 fig_line.update_traces(line_color='#38bdf8', line_width=3, marker_size=8)
-                fig_line.update_layout(
-                    paper_bgcolor="rgba(0,0,0,0)",
-                    plot_bgcolor="rgba(255,255,255,0.05)",
-                    font_color="white",
-                    xaxis_title="",
-                    yaxis_title="عدد الدروس/المهام",
-                    margin=dict(t=20, l=10, r=10, b=10)
-                )
-                
-                # جعل المحور الصادي يبدأ من 0 دائماً ويزيد بأرقام صحيحة
+                fig_line.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(255,255,255,0.05)", font_color="white", xaxis_title="", yaxis_title="عدد الدروس", margin=dict(t=20, l=10, r=10, b=10))
                 fig_line.update_yaxes(dtick=1, rangemode="tozero")
-                
                 st.plotly_chart(fig_line, use_container_width=True)
 
             with col_pie:
                 st.subheader("🎯 نسبة الإنجاز")
                 pie_data = tasks['is_completed'].map({True: 'تم الإنجاز', False: 'معلق'}).value_counts().reset_index()
                 pie_data.columns = ['الحالة', 'العدد']
-                
-                fig_pie = px.pie(pie_data, values='العدد', names='الحالة', 
-                                 hole=0.6, 
-                                 color='الحالة',
-                                 color_discrete_map={'تم الإنجاز': '#22c55e', 'معلق': '#ef4444'},
-                                 template='plotly_dark')
-                
-                fig_pie.update_layout(
-                    paper_bgcolor="rgba(0,0,0,0)",
-                    plot_bgcolor="rgba(0,0,0,0)",
-                    font_color="white",
-                    showlegend=False,
-                    margin=dict(t=20, l=10, r=10, b=10)
-                )
+                fig_pie = px.pie(pie_data, values='العدد', names='الحالة', hole=0.6, color='الحالة', color_discrete_map={'تم الإنجاز': '#22c55e', 'معلق': '#ef4444'}, template='plotly_dark')
+                fig_pie.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="white", showlegend=False, margin=dict(t=20, l=10, r=10, b=10))
                 fig_pie.update_traces(textinfo='percent+label')
                 st.plotly_chart(fig_pie, use_container_width=True)
                 
@@ -355,26 +322,17 @@ def main_app():
 
     elif menu == "غرفة الإنقاذ":
         st.title("🚑 غرفة عمليات الإنقاذ (AI Planner)")
-        
         col_add, col_del = st.columns(2)
 
         with col_add:
-            st.markdown("""
-            <div class='glass-card'>
-                <h4>➕ إضافة خطة دراسية</h4>
-                <p style='color:#aaa; font-size:0.9em;'>أضف موادك وسيقوم النظام بتوزيعها بذكاء.</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
+            st.markdown("<div class='glass-card'><h4>➕ إضافة خطة دراسية</h4><p style='color:#aaa;'>أضف موادك وسيقوم النظام بتوزيعها.</p></div>", unsafe_allow_html=True)
             with st.form("rescue_form"):
                 subj = st.text_input("📚 اسم المادة", placeholder="مثال: الكيمياء")
                 num = st.number_input("🔢 عدد الدروس", 1, 100, 5)
                 diff = st.slider("😰 مستوى الصعوبة", 1, 10, 7)
                 d_date = st.date_input("🗓️ تاريخ الانتهاء", min_value=date.today() + timedelta(days=1))
-                
                 st.markdown("<br>", unsafe_allow_html=True)
                 submit = st.form_submit_button("🚀 إضافة الخطة")
-                
                 if submit and subj:
                     with st.spinner('جاري تحليل الجدول...'): time.sleep(1)
                     days = (d_date - date.today()).days
@@ -385,26 +343,15 @@ def main_app():
                     time.sleep(1.5); st.rerun()
 
         with col_del:
-            st.markdown("""
-            <div class='glass-card' style='border-color:rgba(248, 113, 113, 0.3)'>
-                <h4 style='color:#f87171'>🗑️ حذف المواد والمهام</h4>
-                <p style='color:#aaa; font-size:0.9em;'>تخلص من المواد التي انتهيت منها نهائياً.</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
+            st.markdown("<div class='glass-card' style='border-color:#f87171'><h4 style='color:#f87171'>🗑️ حذف المواد والمهام</h4><p style='color:#aaa;'>تخلص من المواد التي انتهيت منها.</p></div>", unsafe_allow_html=True)
             my_tasks = get_tasks(role, user['username'])
             if not my_tasks.empty:
-                task_options = {f"{row['subject']} (بتاريخ: {row['due_date']})": row['id'] for i, row in my_tasks.iterrows()}
+                task_options = {f"{row['subject']} ({row['due_date']})": row['id'] for i, row in my_tasks.iterrows()}
                 selected_task_label = st.selectbox("🔻 اختر المهمة لحذفها:", list(task_options.keys()))
-                
                 if st.button("❌ حذف المحدد نهائياً", type="primary"):
-                    task_id_to_delete = task_options[selected_task_label]
-                    delete_task_by_id(task_id_to_delete)
-                    st.toast("تم الحذف من قاعدة البيانات!", icon="🗑️")
-                    time.sleep(1)
-                    st.rerun()
-            else:
-                st.info("لا توجد مهام مسجلة لحذفها.")
+                    delete_task_by_id(task_options[selected_task_label])
+                    st.toast("تم الحذف من قاعدة البيانات!", icon="🗑️"); time.sleep(1); st.rerun()
+            else: st.info("لا توجد مهام لحذفها.")
 
     elif menu == "المكتبة":
         st.title("📚 مكتبة الوسائط")
@@ -420,16 +367,10 @@ def main_app():
             for i, row in files.iterrows():
                 with cols[i%2]:
                     icon = "📄" if "pdf" in row['file_type'].lower() else "🖼️"
-                    st.markdown(f"""
-                    <div style='background:rgba(255,255,255,0.05);padding:15px;border-radius:15px;text-align:center;margin-bottom:10px;border:1px solid rgba(255,255,255,0.1)'>
-                        <h2 style='margin:0'>{icon}</h2>
-                        <h5 style='margin:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis'>{row['file_name']}</h5>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown(f"<div style='background:rgba(255,255,255,0.05);padding:15px;border-radius:15px;text-align:center;margin-bottom:10px;border:1px solid rgba(255,255,255,0.1)'><h2 style='margin:0'>{icon}</h2><h5 style='margin:5px'>{row['file_name']}</h5></div>", unsafe_allow_html=True)
                     if row['is_real']:
                         file_data = get_real_file_content(row['id'])
-                        if file_data:
-                            st.download_button("📥 تحميل", data=file_data[0], file_name=file_data[1], mime=row['file_type'], key=f"dl_{row['id']}")
+                        if file_data: st.download_button("📥 تحميل", data=file_data[0], file_name=file_data[1], mime=row['file_type'], key=f"dl_{row['id']}")
                     else: st.button("📥 تحميل", key=f"fake_{row['id']}", disabled=True)
         else: st.info("المكتبة فارغة.")
 
@@ -445,7 +386,7 @@ def main_app():
             delete_user_db(u_del); st.success("تم الحذف"); time.sleep(1); st.rerun()
 
 # ---------------------------------------------------------
-# 5. صفحة الدخول
+# 5. صفحة الدخول (تحديث: عرض البيانات جنب بعض)
 # ---------------------------------------------------------
 def login_page():
     c1, c2, c3 = st.columns([1, 6, 1])
@@ -459,6 +400,7 @@ def login_page():
             <p style='color:#94a3b8;'>نظام إدارة المهام الذكي للطلاب 🚀</p>
         </div>
         """, unsafe_allow_html=True)
+        
         tab1, tab2 = st.tabs(["🔒 دخول", "✨ تسجيل"])
         with tab1:
             u = st.text_input("اسم المستخدم", key="l_u"); p = st.text_input("كلمة المرور", type="password", key="l_p")
@@ -466,7 +408,16 @@ def login_page():
                 user = login_user(u, p)
                 if user: st.session_state.logged_in = True; st.session_state.user = user; st.rerun()
                 else: st.error("بيانات خاطئة!")
-            st.caption("جرب: student / 123")
+            
+            # --- التعديل هنا: وضع البيانات بجانب بعضها ---
+            st.markdown("""
+            <div style='background:rgba(0,0,0,0.3); padding:10px; border-radius:10px; margin-top:10px; display:flex; justify-content:space-around; align-items:center;'>
+                <span style='color:#bbb; font-size:0.85em'>👤 الطالب: <b style='color:white'>student</b> / <b style='color:white'>123</b></span>
+                <span style='color:#555'>|</span>
+                <span style='color:#bbb; font-size:0.85em'>👮 المدير: <b style='color:white'>admin</b> / <b style='color:white'>123</b></span>
+            </div>
+            """, unsafe_allow_html=True)
+            
         with tab2:
             nu = st.text_input("اختر اسم مستخدم", key="r_u"); nn = st.text_input("اسمك الحقيقي", key="r_n"); np = st.text_input("كلمة مرور قوية", type="password", key="r_p")
             if st.button("إنشاء حساب جديد"):
