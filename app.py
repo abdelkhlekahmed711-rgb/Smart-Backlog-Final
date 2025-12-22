@@ -22,25 +22,23 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;900&display=swap');
 
-/* 1. تطبيق الخط العربي على النصوص فقط (وليس الأيقونات) */
+/* 1. تطبيق الخط العربي على النصوص فقط */
 html, body, p, div, h1, h2, h3, h4, h5, h6, span, a, label, button, input, textarea {
     font-family: 'Cairo', sans-serif !important;
 }
 
-/* 2. إصلاح الأيقونات (منع تحولها لنصوص) */
+/* 2. إصلاح الأيقونات */
 .material-icons, 
 .st-emotion-cache-1pbqwg9, 
 [data-testid="stSidebarCollapsedControl"] {
     font-family: 'Material Icons', sans-serif !important;
 }
 
-/* 3. تنسيق الشريط العلوي الأساسي (عشان الزرار يظهر) */
+/* 3. تنسيق الهيدر وزر القائمة */
 header[data-testid="stHeader"] {
-    background-color: transparent !important; /* شفاف عشان الخلفية تبان */
+    background-color: transparent !important;
     z-index: 1000 !important;
 }
-
-/* 4. تلوين زر القائمة (الثلاث شرط) بالأبيض */
 [data-testid="stSidebarCollapsedControl"] {
     color: white !important;
     background-color: rgba(255,255,255,0.1) !important;
@@ -50,11 +48,9 @@ header[data-testid="stHeader"] {
 [data-testid="stSidebarCollapsedControl"]:hover {
     background-color: #2563eb !important;
 }
-
-/* 5. إخفاء الشريط الملون المزعج في الأعلى */
 [data-testid="stDecoration"] { display: none; }
 
-/* 6. الخلفية العامة */
+/* 4. الخلفية العامة */
 .stApp {
     background-color: #050505;
     background-image: 
@@ -63,22 +59,32 @@ header[data-testid="stHeader"] {
     color: #ffffff;
 }
 
-/* 7. تنسيق السايد بار */
+/* 5. تنسيق السايد بار */
 section[data-testid="stSidebar"] {
     background-color: #0a0a0f !important;
     border-right: 1px solid #1f2937;
 }
 
-/* 8. تحسينات الموبايل (الأرقام واضحة) */
+/* 6. تحسينات الموبايل */
 [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
     color: white !important;
 }
 
-/* 9. تنسيق الأزرار */
+/* 7. تنسيق الأزرار */
 div.stButton > button {
     background: linear-gradient(90deg, #2563eb, #7c3aed);
     color: white; border: none; padding: 12px; border-radius: 12px;
     font-weight: bold; width: 100%;
+}
+
+/* 8. تنسيق الكروت الزجاجية */
+.glass-card {
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -173,6 +179,12 @@ def add_task_db(user, subj, units, diff, d_date):
                  (user, subj, units, diff, prio, d_date, False))
     conn.commit(); conn.close()
 
+# دالة الحذف الجديدة
+def delete_task_db(user, task_name):
+    conn = get_connection()
+    conn.execute("DELETE FROM tasks WHERE user=? AND subject=?", (user, task_name))
+    conn.commit(); conn.close()
+
 def upload_file_db(name, type, content):
     conn = get_connection()
     conn.execute("INSERT INTO attachments (file_name, file_type, file_content, is_real, upload_date) VALUES (?, ?, ?, ?, ?)",
@@ -232,7 +244,6 @@ def main_app():
     role = user['role']
     
     with st.sidebar:
-        # عرض البروفايل هنا في القائمة الجانبية (أكثر استقراراً)
         st.markdown(f"""
         <div style="text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 20px;">
             <h3 style="margin:0; color:white;">👤 {user['name']}</h3>
@@ -345,26 +356,58 @@ def main_app():
         else: st.info("جدولك فارغ! اذهب لغرفة الإنقاذ.")
 
     elif menu == "غرفة الإنقاذ":
-        st.title("🚑 غرفة الإنقاذ (AI Planner)")
-        st.markdown("<div style='background:rgba(255,255,255,0.1);padding:15px;border-radius:15px;margin-bottom:20px'>💡 أدخل المادة المتراكمة وسيقوم الذكاء الاصطناعي بتقسيمها لك.</div>", unsafe_allow_html=True)
-        with st.form("rescue_form"):
-            c1, c2 = st.columns(2)
-            with c1:
+        st.title("🚑 غرفة عمليات الإنقاذ (AI Planner)")
+        
+        # --- تقسيم الصفحة لعمودين: إضافة وحذف ---
+        col_add, col_del = st.columns(2)
+
+        # 1. العمود الأيمن: إضافة مادة (الكود القديم)
+        with col_add:
+            st.markdown("""
+            <div class='glass-card'>
+                <h4>➕ إضافة خطة دراسية</h4>
+                <p style='color:#aaa; font-size:0.9em;'>سيقوم الذكاء الاصطناعي بتوزيع المنهج تلقائياً.</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            with st.form("rescue_form"):
                 subj = st.text_input("📚 اسم المادة", placeholder="مثال: الكيمياء")
                 num = st.number_input("🔢 عدد الدروس", 1, 100, 5)
-            with c2:
                 diff = st.slider("😰 مستوى الصعوبة", 1, 10, 7)
                 d_date = st.date_input("🗓️ تاريخ الانتهاء", min_value=date.today() + timedelta(days=1))
-            st.markdown("<br>", unsafe_allow_html=True)
-            submit = st.form_submit_button("🚀 أنقذني الآن")
-            if submit and subj:
-                with st.spinner('جاري تحليل الجدول...'): time.sleep(1)
-                days = (d_date - date.today()).days
-                quota = math.ceil(num / max(days, 1))
-                st.success(f"تم اعتماد الخطة: {quota} درس يومياً لمدة {days} أيام")
-                for i in range(min(days, num)):
-                    add_task_db(user['username'], f"مذاكرة {subj} - جزء {i+1} (إنقاذ)", 1, diff, date.today()+timedelta(days=i))
-                time.sleep(1.5); st.rerun()
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                submit = st.form_submit_button("🚀 تفعيل الخطة")
+                
+                if submit and subj:
+                    with st.spinner('جاري تحليل الجدول...'): time.sleep(1)
+                    days = (d_date - date.today()).days
+                    quota = math.ceil(num / max(days, 1))
+                    st.success(f"تم اعتماد الخطة: {quota} درس يومياً لمدة {days} أيام")
+                    for i in range(min(days, num)):
+                        add_task_db(user['username'], f"مذاكرة {subj} - جزء {i+1} (إنقاذ)", 1, diff, date.today()+timedelta(days=i))
+                    time.sleep(1.5); st.rerun()
+
+        # 2. العمود الأيسر: حذف مادة (الكود الجديد)
+        with col_del:
+            st.markdown("""
+            <div class='glass-card'>
+                <h4>🗑️ حذف المواد والمهام</h4>
+                <p style='color:#aaa; font-size:0.9em;'>تخلص من المواد التي انتهيت منها أو المهام المكررة.</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            my_tasks = get_tasks(role, user['username'])
+            if not my_tasks.empty:
+                task_to_del = st.selectbox("🔻 اختر المهمة/المادة لحذفها:", my_tasks['subject'].unique())
+                
+                if st.button("❌ حذف المحدد نهائياً", type="primary"):
+                    delete_task_db(user['username'], task_to_del)
+                    st.toast(f"تم حذف {task_to_del} بنجاح!", icon="🗑️")
+                    time.sleep(1)
+                    st.rerun()
+            else:
+                st.info("لا توجد مهام مسجلة لحذفها.")
 
     elif menu == "المكتبة":
         st.title("📚 مكتبة الوسائط")
