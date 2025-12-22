@@ -16,16 +16,34 @@ from streamlit_lottie import st_lottie
 st.set_page_config(page_title="SmartBacklog - المبدع الصغير", page_icon="🎓", layout="wide")
 
 # ---------------------------------------------------------
-# 2. التنسيق المتطور (Advanced CSS) - تعديلات الواجهة والخطوط
+# 2. التنسيق المتطور (تم تحديثه لحل مشاكل الأندرويد والزر)
 # ---------------------------------------------------------
 st.markdown("""
 <style>
-/* استيراد خط Cairo المميز */
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;900&display=swap');
 
-/* إخفاء الهيدر التقليدي */
-header[data-testid="stHeader"] { display: none !important; }
-footer { visibility: hidden; }
+/* إخفاء خلفية الهيدر الأصلي لكن إبقاء الأزرار */
+header[data-testid="stHeader"] { background: transparent !important; }
+[data-testid="stDecoration"] { display: none; }
+
+/* --- 1. إظهار زر القائمة (الهمبرغر) وتخصيصه --- */
+button[kind="header"] {
+    background: transparent !important;
+    color: #ffffff !important; /* لون أبيض */
+    font-size: 20px !important;
+    z-index: 100000 !important; /* لضمان ظهوره فوق الناف بار */
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    display: block !important;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    width: 40px; height: 40px;
+}
+/* إخفاء زر القائمة إذا كانت القائمة مفتوحة (اختياري، لعدم التداخل) */
+section[data-testid="stSidebar"][aria-expanded="true"] + div button[kind="header"] {
+    display: none;
+}
 
 /* الخلفية العامة */
 .stApp {
@@ -35,92 +53,82 @@ footer { visibility: hidden; }
         radial-gradient(at 50% 100%, hsla(225,39%,25%,1) 0, transparent 50%);
     color: #ffffff;
 }
-
 * { font-family: 'Cairo', sans-serif !important; }
 
-/* تصميم الشريط العلوي المخصص */
+/* الشريط العلوي المخصص */
 .custom-navbar {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: 70px;
-    background: rgba(20, 20, 30, 0.85);
+    position: fixed; top: 0; left: 0; right: 0; height: 70px;
+    background: rgba(20, 20, 30, 0.95); /* زيادة التعتيم للأندرويد */
     backdrop-filter: blur(15px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); z-index: 9999;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
-
+/* إزاحة اللوجو لليمين قليلاً لترك مكان لزر القائمة */
 .navbar-brand {
-    font-size: 24px;
-    font-weight: 900;
+    font-size: 24px; font-weight: 900;
+    margin-left: 50px; /* مسافة لزر القائمة */
     background: -webkit-linear-gradient(45deg, #3b82f6, #d946ef);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
-
 .navbar-user {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(255,255,255,0.1);
-    padding: 5px 15px;
-    border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.1);
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.1); padding: 5px 15px;
+    border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
 }
 
-/* تعديل السايد بار */
 section[data-testid="stSidebar"] {
-    background-color: #0a0a0f !important;
-    border-right: 1px solid #1f2937;
-    padding-top: 80px; /* مساحة عشان الناف بار */
+    background-color: #0a0a0f !important; border-right: 1px solid #1f2937; padding-top: 80px;
 }
 
 /* الكروت */
 .glass-card {
     background: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 20px;
-    padding: 25px;
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
     transition: transform 0.2s;
-}
-.glass-card:hover { transform: translateY(-3px); border-color: rgba(56, 189, 248, 0.3); }
-
-/* تحسين الجدول والخطوط */
-div[data-testid="stDataEditor"] {
-    border-radius: 15px;
-    overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 20px;
 }
 
-/* الأزرار العملاقة للأندرويد */
+/* --- 2. إصلاح ألوان الأندرويد (Mobile View) --- */
+@media (max-width: 600px) {
+    .custom-navbar { height: 60px; padding: 0 10px; }
+    .navbar-brand { font-size: 18px; margin-left: 45px; } /* تصغير اللوجو وتعديل المسافة */
+    
+    /* إجبار الأرقام والنصوص على اللون الأبيض */
+    [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
+        color: #ffffff !important;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.8); /* ظل لزيادة الوضوح */
+    }
+    
+    /* إصلاح ألوان الجدول في الموبايل */
+    div[data-testid="stDataEditor"] div {
+        color: #ffffff !important;
+        background-color: transparent !important;
+    }
+    
+    /* العناوين والنصوص العادية */
+    h1, h2, h3, h4, h5, p, span, div {
+        color: #ffffff !important;
+    }
+    
+    /* زر القائمة في الموبايل */
+    button[kind="header"] {
+        top: 10px; left: 10px;
+    }
+}
+
 div.stButton > button {
     background: linear-gradient(90deg, #2563eb, #7c3aed);
     color: white; border: none; padding: 16px; border-radius: 16px;
     font-size: 18px !important; font-weight: 800 !important;
-    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
     width: 100%; margin-top: 10px;
-}
-div.stButton > button:active { transform: scale(0.97); }
-
-/* تخصيص الموبايل */
-@media (max-width: 600px) {
-    .custom-navbar { height: 60px; padding: 0 15px; }
-    .navbar-brand { font-size: 20px; }
-    .glass-card { padding: 15px; margin-bottom: 15px; }
-    h1 { font-size: 26px !important; }
-    h3 { font-size: 18px !important; }
 }
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 3. منطق قاعدة البيانات (كما هو تماماً بدون لمس)
+# 3. قاعدة البيانات (كما هي)
 # ---------------------------------------------------------
 DB_FILE = 'smart_backlog_v5.db'
 
@@ -176,7 +184,7 @@ def inject_starting_data():
 init_db()
 inject_starting_data()
 
-# --- دوال المساعدة ---
+# --- دوال البيانات ---
 def register_user(username, password, name):
     conn = get_connection()
     try:
@@ -250,7 +258,6 @@ if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'user' not in st.session_state: st.session_state.user = {}
 
 def render_custom_header(user):
-    """رسم الشريط العلوي الجديد المخصص"""
     st.markdown(f"""
     <div class="custom-navbar">
         <div class="navbar-brand">SmartBacklog 🚀</div>
@@ -282,12 +289,9 @@ def render_progress(pct):
 def main_app():
     user = st.session_state.user
     role = user['role']
-    
-    # 1. استدعاء الهيدر المخصص
     render_custom_header(user)
     
     with st.sidebar:
-        # قائمة جانبية أنيقة
         opts = ["لوحة التحكم", "الجدول اليومي", "غرفة الإنقاذ", "المكتبة"]
         icons = ['speedometer2', 'calendar-check', 'life-preserver', 'collection']
         if role == 'admin': opts.insert(1, "إدارة المستخدمين"); icons.insert(1, "people")
@@ -298,7 +302,6 @@ def main_app():
                 "nav-link": {"color": "#ddd", "font-size": "16px", "margin": "5px 0"},
                 "nav-link-selected": {"background-color": "#2563eb", "color": "white", "font-weight":"bold"},
             })
-        
         st.write("---"); 
         if st.button("🚪 خروج"): st.session_state.logged_in = False; st.rerun()
 
@@ -309,7 +312,6 @@ def main_app():
         if not tasks.empty:
             done = len(tasks[tasks['is_completed']==True]); total = len(tasks); pct = (done/total*100) if total > 0 else 0
             
-            # قسم الإحصائيات العلوية
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
             render_progress(pct)
             c1, c2, c3 = st.columns(3)
@@ -318,83 +320,71 @@ def main_app():
             c3.metric("🔥 المتبقية", total - done)
             st.markdown('</div>', unsafe_allow_html=True)
             
-            # الرسوم البيانية التفاعلية الملونة
             col1, col2 = st.columns(2)
             with col1:
-                st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-                st.markdown("##### 🎨 توزيع المواد")
-                
-                # تحسين البيانات للرسم
                 tasks['Subject_Main'] = tasks['subject'].apply(lambda x: x.split('-')[0].strip())
                 cnt = tasks['Subject_Main'].value_counts().reset_index()
                 cnt.columns = ['المادة', 'العدد']
                 
-                # الرسم الملون (تلوين كل عمود بلون مختلف)
                 fig_bar = px.bar(cnt, x='المادة', y='العدد', 
-                                 color='المادة',  # السر هنا: التلوين حسب اسم المادة
-                                 text='العدد', 
-                                 template='plotly_dark')
+                                 title="🎨 توزيع المواد",
+                                 color='المادة', text='العدد', template='plotly_dark')
                 
-                fig_bar.update_layout(showlegend=False, plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
+                fig_bar.update_layout(
+                    paper_bgcolor="rgba(30, 41, 59, 0.6)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    font_color="white",
+                    showlegend=False,
+                    title_font_size=20,
+                    margin=dict(t=50, l=20, r=20, b=20)
+                )
                 st.plotly_chart(fig_bar, use_container_width=True)
-                st.markdown('</div>', unsafe_allow_html=True)
 
             with col2:
-                st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-                st.markdown("##### 🎯 نسبة الإنجاز")
                 pie_data = tasks['is_completed'].map({True: 'تم الإنجاز', False: 'معلق'}).value_counts().reset_index()
                 pie_data.columns = ['الحالة', 'العدد']
                 
                 fig_pie = px.pie(pie_data, values='العدد', names='الحالة', 
+                                 title="🎯 نسبة الإنجاز",
                                  hole=0.5, 
                                  color='الحالة',
                                  color_discrete_map={'تم الإنجاز': '#22c55e', 'معلق': '#ef4444'},
                                  template='plotly_dark')
                 
+                fig_pie.update_layout(
+                    paper_bgcolor="rgba(30, 41, 59, 0.6)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    font_color="white",
+                    title_font_size=20,
+                    margin=dict(t=50, l=20, r=20, b=20)
+                )
                 fig_pie.update_traces(textinfo='percent+label', textfont_size=14)
-                fig_pie.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
                 st.plotly_chart(fig_pie, use_container_width=True)
-                st.markdown('</div>', unsafe_allow_html=True)
+                
         else: st.info("لا توجد بيانات.. ابدأ بإضافة مهام!")
 
     elif menu == "الجدول اليومي":
         st.markdown("<h2 style='margin-bottom:20px'>🗓️ جدول الأولويات</h2>", unsafe_allow_html=True)
         tasks = get_tasks(role, user['username'])
-        
         if not tasks.empty:
-            # فلترة وترتيب ذكي
             filter_option = st.selectbox("🌪️ تصفية العرض:", ["الكل", "المعلق (Pending)", "المنجز (Done)"])
             if filter_option == "المعلق (Pending)": tasks = tasks[tasks['is_completed'] == False]
             elif filter_option == "المنجز (Done)": tasks = tasks[tasks['is_completed'] == True]
-
-            # الترتيب حسب الأهمية (Priority) تنازلياً
             tasks = tasks.sort_values(by=['is_completed', 'priority'], ascending=[True, False]).reset_index(drop=True)
             
-            st.markdown("### ⚡ رتبنا لك المهام حسب الأهمية:")
-            
-            # الجدول المطور مع خانة الأولوية الواضحة
             edited = st.data_editor(
                 tasks,
                 column_config={
                     "is_completed": st.column_config.CheckboxColumn("إنجاز", width="small"),
                     "subject": st.column_config.TextColumn("تفاصيل المهمة", width="large"),
-                    # تحويل الأولوية لشريط ملون واضح
-                    "priority": st.column_config.ProgressColumn(
-                        "الأولوية 🔥", 
-                        help="كلما زاد الرقم زادت الأهمية",
-                        format="%d",
-                        min_value=0, max_value=100,
-                    ),
+                    "priority": st.column_config.ProgressColumn("الأولوية 🔥", help="كلما زاد الرقم زادت الأهمية", format="%d", min_value=0, max_value=100),
                     "due_date": st.column_config.DateColumn("الموعد النهائي"),
                     "id": None, "user": None, "units": None, "difficulty": None, "Subject_Main": None
                 },
                 column_order=["is_completed", "priority", "subject", "due_date"],
                 disabled=["subject", "priority", "due_date"],
-                hide_index=True,
-                use_container_width=True,
-                key="tasks_editor"
+                hide_index=True, use_container_width=True, key="tasks_editor"
             )
-            
             if st.button("💾 حفظ التغييرات الآن"):
                 conn = get_connection()
                 changes = 0
@@ -402,16 +392,12 @@ def main_app():
                     conn.execute("UPDATE tasks SET is_completed=? WHERE id=?", (row['is_completed'], row['id']))
                     changes += 1
                 conn.commit(); conn.close()
-                if changes > 0:
-                    st.toast("تم الحفظ بنجاح! استمر يا بطل 💪", icon="✅")
-                    time.sleep(1); st.rerun()
-        else:
-            st.info("جدولك فارغ! اذهب لغرفة الإنقاذ.")
+                if changes > 0: st.toast("تم الحفظ بنجاح! استمر يا بطل 💪", icon="✅"); time.sleep(1); st.rerun()
+        else: st.info("جدولك فارغ! اذهب لغرفة الإنقاذ.")
 
     elif menu == "غرفة الإنقاذ":
         st.markdown("<h2>🚑 غرفة الإنقاذ (AI Planner)</h2>", unsafe_allow_html=True)
         st.markdown("<div class='glass-card'>💡 أدخل المادة المتراكمة وسيقوم الذكاء الاصطناعي بتقسيمها لك.</div>", unsafe_allow_html=True)
-
         with st.form("rescue_form"):
             c1, c2 = st.columns(2)
             with c1:
@@ -420,17 +406,12 @@ def main_app():
             with c2:
                 diff = st.slider("😰 مستوى الصعوبة", 1, 10, 7)
                 d_date = st.date_input("🗓️ تاريخ الانتهاء", min_value=date.today() + timedelta(days=1))
-            
             st.markdown("<br>", unsafe_allow_html=True)
             submit = st.form_submit_button("🚀 أنقذني الآن")
-
             if submit and subj:
-                with st.spinner('جاري تحليل الجدول...'):
-                    time.sleep(1)
-                
+                with st.spinner('جاري تحليل الجدول...'): time.sleep(1)
                 days = (d_date - date.today()).days
                 quota = math.ceil(num / max(days, 1))
-                
                 st.success(f"تم اعتماد الخطة: {quota} درس يومياً لمدة {days} أيام")
                 for i in range(min(days, num)):
                     add_task_db(user['username'], f"مذاكرة {subj} - جزء {i+1} (إنقاذ)", 1, diff, date.today()+timedelta(days=i))
@@ -444,7 +425,6 @@ def main_app():
                 bytes_data = up_file.getvalue()
                 upload_file_db(up_file.name, up_file.type, bytes_data)
                 st.success("تم الرفع!"); time.sleep(1); st.rerun()
-        
         files = get_files()
         cols = st.columns(2)
         for i, row in files.iterrows():
@@ -460,8 +440,7 @@ def main_app():
                     file_data = get_real_file_content(row['id'])
                     if file_data:
                         st.download_button("📥 تحميل", data=file_data[0], file_name=file_data[1], mime=row['file_type'], key=f"dl_{row['id']}")
-                else:
-                    st.button("📥 تحميل", key=f"fake_{row['id']}", disabled=True)
+                else: st.button("📥 تحميل", key=f"fake_{row['id']}", disabled=True)
 
     elif menu == "إدارة المستخدمين" and role == 'admin':
         st.title("👮 لوحة المدير")
@@ -475,23 +454,20 @@ def main_app():
             delete_user_db(u_del); st.success("تم الحذف"); time.sleep(1); st.rerun()
 
 # ---------------------------------------------------------
-# 5. صفحة الدخول (محسنة)
+# 5. صفحة الدخول
 # ---------------------------------------------------------
 def login_page():
-    # تصميم متجاوب لصفحة الدخول
     c1, c2, c3 = st.columns([1, 6, 1])
     with c2:
         st.markdown("<br>", unsafe_allow_html=True)
         lottie_anim = load_lottie("https://lottie.host/94875632-7605-473d-8065-594ea470b355/9Z53657123.json")
         if lottie_anim: st_lottie(lottie_anim, height=220, key="anim")
-        
         st.markdown("""
         <div class='glass-card' style='text-align:center; margin-bottom:20px'>
             <h1 style='background: linear-gradient(to right, #60a5fa, #c084fc); -webkit-background-clip: text; color: transparent;'>SmartBacklog</h1>
             <p style='color:#94a3b8;'>نظام إدارة المهام الذكي للطلاب 🚀</p>
         </div>
         """, unsafe_allow_html=True)
-        
         tab1, tab2 = st.tabs(["🔒 دخول", "✨ تسجيل"])
         with tab1:
             u = st.text_input("اسم المستخدم", key="l_u"); p = st.text_input("كلمة المرور", type="password", key="l_p")
@@ -500,7 +476,6 @@ def login_page():
                 if user: st.session_state.logged_in = True; st.session_state.user = user; st.rerun()
                 else: st.error("بيانات خاطئة!")
             st.caption("جرب: student / 123")
-            
         with tab2:
             nu = st.text_input("اختر اسم مستخدم", key="r_u"); nn = st.text_input("اسمك الحقيقي", key="r_n"); np = st.text_input("كلمة مرور قوية", type="password", key="r_p")
             if st.button("إنشاء حساب جديد"):
