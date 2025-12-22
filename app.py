@@ -16,30 +16,40 @@ from streamlit_lottie import st_lottie
 st.set_page_config(page_title="SmartBacklog - المبدع الصغير", page_icon="🎓", layout="wide")
 
 # ---------------------------------------------------------
-# 2. التنسيق المستقر (Clean CSS)
+# 2. التنسيق المستقر (Clean CSS - تم إصلاح الأخطاء)
 # ---------------------------------------------------------
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;900&display=swap');
 
-/* إخفاء الهيدر الافتراضي المزعج */
+/* --- 1. إصلاح مشكلة الخط (استثناء الأيقونات) --- */
+/* نطبق الخط على النصوص العربية والإنجليزية فقط، وليس على أيقونات النظام */
+body, h1, h2, h3, h4, h5, h6, p, div, span, a, button, input, textarea, label {
+    font-family: 'Cairo', sans-serif !important;
+}
+/* إعادة ضبط خط الأيقونات لتعمل بشكل صحيح */
+[data-testid="stSidebarCollapsedControl"] i, 
+.material-icons,
+.material-symbols-rounded {
+    font-family: 'Material Icons' !important; 
+}
+
+/* --- 2. تنظيف الهيدر وزر القائمة --- */
+/* إخفاء الشريط الملون العلوي فقط */
 header[data-testid="stHeader"] { background: transparent !important; }
 [data-testid="stDecoration"] { display: none; }
 
-/* تنسيق زر القائمة الأصلي (هامبرغر) ليظهر بشكل جميل */
+/* تنسيق زر القائمة الأصلي (ليكون أبيض وواضح) */
 button[kind="header"] {
+    background: transparent !important;
     color: #ffffff !important;
-    background: rgba(255, 255, 255, 0.1) !important;
-    border-radius: 10px !important;
     border: 1px solid rgba(255,255,255,0.2) !important;
-    top: 15px !important; /* ضبط المكان */
+    border-radius: 8px !important;
+    top: 15px !important;
     left: 15px !important;
-    z-index: 99999 !important;
-    transition: all 0.3s;
-}
-button[kind="header"]:hover {
-    background: rgba(37, 99, 235, 0.5) !important; /* لون أزرق عند اللمس */
-    transform: scale(1.05);
+    width: 45px !important;
+    height: 45px !important;
+    z-index: 100001 !important;
 }
 
 /* الخلفية العامة */
@@ -50,36 +60,38 @@ button[kind="header"]:hover {
         radial-gradient(at 50% 100%, hsla(225,39%,25%,1) 0, transparent 50%);
     color: #ffffff;
 }
-* { font-family: 'Cairo', sans-serif !important; }
 
-/* شريط العنوان المخصص */
+/* --- 3. تصميم الناف بار (بدون تداخل) --- */
 .custom-navbar {
-    position: fixed; top: 0; left: 0; right: 0; height: 70px;
-    background: rgba(20, 20, 30, 0.95);
-    backdrop-filter: blur(15px);
+    position: fixed; top: 0; left: 0; right: 0; height: 75px;
+    background: rgba(15, 23, 42, 0.9); /* لون داكن وواضح */
+    backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
-    z-index: 9999;
+    z-index: 100000; /* تحت زر القائمة مباشرة */
     display: flex; align-items: center; 
-    justify-content: space-between; /* تباعد العناصر */
-    padding: 0 20px; 
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    padding: 0 15px; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
 }
 
-/* البروفايل (يسار) - قمنا بإزاحته قليلاً لليمين عشان زر القائمة */
-.navbar-user {
+/* حاوية البروفايل (على اليسار، بعد زر القائمة) */
+.profile-container {
+    margin-left: 60px; /* مسافة لزر القائمة الأصلي */
     display: flex; align-items: center; gap: 10px;
-    background: rgba(255,255,255,0.1); padding: 5px 15px;
-    border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
-    margin-left: 50px; /* مسافة لزر القائمة الأصلي */
+    background: rgba(255,255,255,0.05); 
+    padding: 5px 15px;
+    border-radius: 20px; 
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
-/* اللوجو (يمين) */
-.navbar-brand {
+/* اللوجو (على اليمين) */
+.brand-container {
+    margin-left: auto; /* يدفع اللوجو لليمين */
     font-size: 22px; font-weight: 900;
     background: -webkit-linear-gradient(45deg, #3b82f6, #d946ef);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 
+/* تنسيق السايد بار */
 section[data-testid="stSidebar"] {
     background-color: #0a0a0f !important; border-right: 1px solid #1f2937; padding-top: 80px;
 }
@@ -94,11 +106,12 @@ section[data-testid="stSidebar"] {
 
 /* تحسينات الموبايل */
 @media (max-width: 600px) {
-    .custom-navbar { height: 60px; padding: 0 10px; }
-    .navbar-brand { font-size: 18px; }
-    .navbar-user { padding: 4px 10px; margin-left: 50px; }
-    .navbar-user span { font-size: 1rem; } /* تصغير أيقونة المستخدم قليلاً */
-    div[data-testid="stMetricValue"], div[data-testid="stMetricLabel"] { color: white !important; }
+    .custom-navbar { height: 65px; padding: 0 10px; }
+    .brand-container { font-size: 18px; }
+    .profile-container { margin-left: 55px; padding: 4px 10px; }
+    .profile-container span { font-size: 1rem; }
+    /* إجبار النصوص على اللون الأبيض */
+    [data-testid="stMetricValue"], [data-testid="stMetricLabel"] { color: white !important; }
 }
 
 div.stButton > button {
@@ -241,17 +254,17 @@ if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'user' not in st.session_state: st.session_state.user = {}
 
 def render_custom_header(user):
-    # تم إزالة التعليقات والأكواد المعقدة لضمان الاستقرار
+    # تم تبسيط كود HTML لإزالة التعارضات
     st.markdown(f"""
     <div class="custom-navbar">
-        <div class="navbar-user">
+        <div class="profile-container">
             <span style="font-size: 1.2rem;">👤</span>
             <div style="line-height: 1.2;">
                 <div style="font-weight: bold; font-size: 0.9rem;">{user['name']}</div>
                 <div style="font-size: 0.7rem; color: #aaa;">{user['role']}</div>
             </div>
         </div>
-        <div class="navbar-brand">SmartBacklog 🚀</div>
+        <div class="brand-container">SmartBacklog 🚀</div>
     </div>
     <div style="margin-top: 60px;"></div> 
     """, unsafe_allow_html=True)
