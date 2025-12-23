@@ -3,7 +3,10 @@ import pandas as pd
 import plotly.express as px
 import sqlite3
 import time
-import os  # مكتبة مهمة لتثبيت مكان الملف
+import os
+import math      # <-- تمت إضافتها لإصلاح الخطأ
+import requests  # <-- تمت إضافتها لتشغيل الأنيميشن
+import random    # <-- احتياطي
 from datetime import date, timedelta
 from streamlit_option_menu import option_menu
 from streamlit_lottie import st_lottie
@@ -14,13 +17,13 @@ from streamlit_lottie import st_lottie
 st.set_page_config(page_title="SmartBacklog", page_icon="🚀", layout="wide")
 
 # ---------------------------------------------------------
-# 2. التنسيق (تم ضبط الألوان للأندرويد بشكل صارم)
+# 2. التنسيق (CSS) - النسخة المظبوطة للأندرويد
 # ---------------------------------------------------------
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;900&display=swap');
 
-/* 1. تعميم الخط العربي */
+/* 1. الخطوط */
 html, body, p, div, h1, h2, h3, h4, h5, h6, span, a, label, button, input, textarea, li {
     font-family: 'Cairo', sans-serif !important;
 }
@@ -30,23 +33,16 @@ html, body, p, div, h1, h2, h3, h4, h5, h6, span, a, label, button, input, texta
     font-family: 'Material Icons', sans-serif !important;
 }
 
-/* 3. إصلاح القائمة الجانبية (Sidebar) للأندرويد */
+/* 3. إصلاح القائمة الجانبية (Sidebar) */
 section[data-testid="stSidebar"] {
     background-color: #0a0a0f !important;
     border-right: 1px solid #1f2937;
 }
-/* إجبار النصوص داخل القائمة على اللون الأبيض */
 section[data-testid="stSidebar"] * {
     color: #ffffff !important;
 }
-/* تحسين القائمة المنسدلة داخل السايد بار */
-.nav-link {
-    color: #cccccc !important;
-}
-.nav-link-selected {
-    background-color: #2563eb !important;
-    color: #ffffff !important;
-}
+.nav-link { color: #cccccc !important; }
+.nav-link-selected { background-color: #2563eb !important; color: #ffffff !important; }
 
 /* 4. الهيدر وزر القائمة */
 header[data-testid="stHeader"] { background-color: transparent !important; z-index: 1000 !important; }
@@ -88,14 +84,12 @@ div.stButton > button {
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 3. قاعدة البيانات (الإصلاح: تثبيت المسار)
+# 3. قاعدة البيانات
 # ---------------------------------------------------------
-# استخدام مسار ثابت لضمان عدم حذف الملف عند إعادة التشغيل
 current_dir = os.getcwd()
 DB_FILE = os.path.join(current_dir, 'smart_backlog_final.db')
 
 def get_connection():
-    # check_same_thread=False ضروري مع streamlit
     return sqlite3.connect(DB_FILE, check_same_thread=False)
 
 def init_db():
@@ -104,16 +98,12 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, name TEXT, role TEXT)''')
     c.execute('''CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, user TEXT, subject TEXT, units INTEGER, difficulty INTEGER, priority INTEGER, due_date DATE, is_completed BOOLEAN)''')
     c.execute('''CREATE TABLE IF NOT EXISTS attachments (id INTEGER PRIMARY KEY AUTOINCREMENT, file_name TEXT, file_type TEXT, file_content BLOB, is_real BOOLEAN, upload_date DATE)''')
-    
-    # إضافة المستخدمين الأساسيين مرة واحدة فقط
     try:
         c.execute("INSERT OR IGNORE INTO users VALUES (?, ?, ?, ?)", ('admin', '123', 'مدير النظام', 'admin'))
         c.execute("INSERT OR IGNORE INTO users VALUES (?, ?, ?, ?)", ('student', '123', 'عبدالخالق', 'student'))
     except: pass
-    
     conn.commit(); conn.close()
 
-# تشغيل التهيئة
 init_db()
 
 # --- دوال البيانات ---
@@ -144,6 +134,7 @@ def get_tasks(user_role, username):
 
 def add_task_db(user, subj, units, diff, d_date):
     conn = get_connection()
+    # معادلة الأولوية (تم إصلاح الخطأ هنا بإضافة مكتبة math)
     prio = int((diff * units * 10) / max((d_date - date.today()).days, 1))
     conn.execute("INSERT INTO tasks (user, subject, units, difficulty, priority, due_date, is_completed) VALUES (?, ?, ?, ?, ?, ?, ?)",
                  (user, subj, units, diff, prio, d_date, False))
@@ -282,6 +273,7 @@ def main_app():
                 fig_pie.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="white", showlegend=False, margin=dict(t=20, l=10, r=10, b=10))
                 fig_pie.update_traces(textinfo='percent+label')
                 st.plotly_chart(fig_pie, use_container_width=True)
+                
         else: st.info("👋 أهلاً بك! البيانات فارغة حالياً. اذهب إلى 'غرفة الإنقاذ' لإضافة خطتك الأولى.")
 
     elif menu == "الجدول اليومي":
@@ -321,7 +313,7 @@ def main_app():
         col_add, col_del = st.columns(2)
 
         with col_add:
-            st.markdown("<div class='glass-card'><h4>➕ إضافة خطة دراسية</h4><p style='color:#aaa;'>أضف موادك وسيقوم النظام بتوزيعها.</p></div>", unsafe_allow_html=True)
+            st.markdown("<div class='glass-card'><h4>➕ إضافة خطة دراسية</h4><p style='color:#aaa;'>أضف موادك وسيقوم النظام بتوزيعها بذكاء.</p></div>", unsafe_allow_html=True)
             with st.form("rescue_form"):
                 subj = st.text_input("📚 اسم المادة", placeholder="مثال: الكيمياء")
                 num = st.number_input("🔢 عدد الدروس", 1, 100, 5)
@@ -329,9 +321,11 @@ def main_app():
                 d_date = st.date_input("🗓️ تاريخ الانتهاء", min_value=date.today() + timedelta(days=1))
                 st.markdown("<br>", unsafe_allow_html=True)
                 submit = st.form_submit_button("🚀 إضافة الخطة")
+                
                 if submit and subj:
                     with st.spinner('جاري تحليل الجدول...'): time.sleep(1)
                     days = (d_date - date.today()).days
+                    # هنا كان سبب الخطأ، والآن تم إصلاحه بوجود import math
                     quota = math.ceil(num / max(days, 1))
                     st.success(f"تم اعتماد الخطة: {quota} درس يومياً لمدة {days} أيام")
                     for i in range(min(days, num)):
@@ -339,10 +333,10 @@ def main_app():
                     time.sleep(1.5); st.rerun()
 
         with col_del:
-            st.markdown("<div class='glass-card' style='border-color:#f87171'><h4 style='color:#f87171'>🗑️ حذف المواد والمهام</h4><p style='color:#aaa;'>تخلص من المواد التي انتهيت منها.</p></div>", unsafe_allow_html=True)
+            st.markdown("<div class='glass-card' style='border-color:#f87171'><h4 style='color:#f87171'>🗑️ حذف المواد والمهام</h4><p style='color:#aaa;'>تخلص من المواد التي انتهيت منها نهائياً.</p></div>", unsafe_allow_html=True)
             my_tasks = get_tasks(role, user['username'])
             if not my_tasks.empty:
-                task_options = {f"{row['subject']} ({row['due_date']})": row['id'] for i, row in my_tasks.iterrows()}
+                task_options = {f"{row['subject']} (بتاريخ: {row['due_date']})": row['id'] for i, row in my_tasks.iterrows()}
                 selected_task_label = st.selectbox("🔻 اختر المهمة لحذفها:", list(task_options.keys()))
                 if st.button("❌ حذف المحدد نهائياً", type="primary"):
                     delete_task_by_id(task_options[selected_task_label])
@@ -382,7 +376,7 @@ def main_app():
             delete_user_db(u_del); st.success("تم الحذف"); time.sleep(1); st.rerun()
 
 # ---------------------------------------------------------
-# 5. صفحة الدخول (تحديث: عرض البيانات جنب بعض)
+# 5. صفحة الدخول (مع شريط البيانات المزدوج)
 # ---------------------------------------------------------
 def login_page():
     c1, c2, c3 = st.columns([1, 6, 1])
@@ -405,7 +399,6 @@ def login_page():
                 if user: st.session_state.logged_in = True; st.session_state.user = user; st.rerun()
                 else: st.error("بيانات خاطئة!")
             
-            # --- شريط معلومات الدخول (طالب + مدير) بجانب بعض ---
             st.markdown("""
             <div style='background:rgba(30, 41, 59, 0.5); padding:12px; border-radius:12px; margin-top:15px; border:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-evenly; align-items:center; flex-wrap:wrap;'>
                 <div style='text-align:center; margin:5px;'>
