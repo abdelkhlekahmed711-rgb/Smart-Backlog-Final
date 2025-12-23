@@ -3,9 +3,7 @@ import pandas as pd
 import plotly.express as px
 import sqlite3
 import time
-import random
-import math
-import requests
+import os  # مكتبة مهمة لتثبيت مكان الملف
 from datetime import date, timedelta
 from streamlit_option_menu import option_menu
 from streamlit_lottie import st_lottie
@@ -16,7 +14,7 @@ from streamlit_lottie import st_lottie
 st.set_page_config(page_title="SmartBacklog", page_icon="🚀", layout="wide")
 
 # ---------------------------------------------------------
-# 2. التنسيق (CSS) - إصلاحات الأندرويد الصارمة
+# 2. التنسيق (تم ضبط الألوان للأندرويد بشكل صارم)
 # ---------------------------------------------------------
 st.markdown("""
 <style>
@@ -27,34 +25,27 @@ html, body, p, div, h1, h2, h3, h4, h5, h6, span, a, label, button, input, texta
     font-family: 'Cairo', sans-serif !important;
 }
 
-/* 2. استثناء الأيقونات من الخط */
+/* 2. استثناء الأيقونات */
 .material-icons, .st-emotion-cache-1pbqwg9, [data-testid="stSidebarCollapsedControl"] {
     font-family: 'Material Icons', sans-serif !important;
 }
 
-/* 3. إصلاح القائمة الجانبية (Sidebar) - خاصة للأندرويد */
+/* 3. إصلاح القائمة الجانبية (Sidebar) للأندرويد */
 section[data-testid="stSidebar"] {
-    background-color: #0a0a0f !important; /* خلفية داكنة جداً */
+    background-color: #0a0a0f !important;
     border-right: 1px solid #1f2937;
 }
-
-/* إجبار جميع النصوص داخل السايد بار على اللون الأبيض */
+/* إجبار النصوص داخل القائمة على اللون الأبيض */
 section[data-testid="stSidebar"] * {
     color: #ffffff !important;
 }
-
-/* تحسين القائمة المنسدلة (Option Menu) داخل السايد بار */
+/* تحسين القائمة المنسدلة داخل السايد بار */
 .nav-link {
-    color: #e0e0e0 !important; /* لون النص غير المحدد */
-    background-color: transparent !important;
-}
-.nav-link:hover {
-    background-color: rgba(255,255,255,0.1) !important;
+    color: #cccccc !important;
 }
 .nav-link-selected {
-    background-color: #2563eb !important; /* لون الخلفية للمحدد */
+    background-color: #2563eb !important;
     color: #ffffff !important;
-    font-weight: bold !important;
 }
 
 /* 4. الهيدر وزر القائمة */
@@ -74,10 +65,9 @@ header[data-testid="stHeader"] { background-color: transparent !important; z-ind
     color: #ffffff;
 }
 
-/* 6. تحسينات عامة للموبايل */
+/* 6. تحسينات الموبايل */
 @media (max-width: 600px) {
     [data-testid="stMetricValue"], [data-testid="stMetricLabel"] { color: white !important; }
-    /* تحسين ظهور الجداول في الموبايل */
     .stDataFrame { background: rgba(255,255,255,0.05) !important; border-radius: 10px; }
 }
 
@@ -98,11 +88,14 @@ div.stButton > button {
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 3. قاعدة البيانات
+# 3. قاعدة البيانات (الإصلاح: تثبيت المسار)
 # ---------------------------------------------------------
-DB_FILE = 'smart_backlog_clean.db'
+# استخدام مسار ثابت لضمان عدم حذف الملف عند إعادة التشغيل
+current_dir = os.getcwd()
+DB_FILE = os.path.join(current_dir, 'smart_backlog_final.db')
 
 def get_connection():
+    # check_same_thread=False ضروري مع streamlit
     return sqlite3.connect(DB_FILE, check_same_thread=False)
 
 def init_db():
@@ -111,12 +104,16 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, name TEXT, role TEXT)''')
     c.execute('''CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, user TEXT, subject TEXT, units INTEGER, difficulty INTEGER, priority INTEGER, due_date DATE, is_completed BOOLEAN)''')
     c.execute('''CREATE TABLE IF NOT EXISTS attachments (id INTEGER PRIMARY KEY AUTOINCREMENT, file_name TEXT, file_type TEXT, file_content BLOB, is_real BOOLEAN, upload_date DATE)''')
+    
+    # إضافة المستخدمين الأساسيين مرة واحدة فقط
     try:
         c.execute("INSERT OR IGNORE INTO users VALUES (?, ?, ?, ?)", ('admin', '123', 'مدير النظام', 'admin'))
         c.execute("INSERT OR IGNORE INTO users VALUES (?, ?, ?, ?)", ('student', '123', 'عبدالخالق', 'student'))
     except: pass
+    
     conn.commit(); conn.close()
 
+# تشغيل التهيئة
 init_db()
 
 # --- دوال البيانات ---
@@ -285,7 +282,6 @@ def main_app():
                 fig_pie.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="white", showlegend=False, margin=dict(t=20, l=10, r=10, b=10))
                 fig_pie.update_traces(textinfo='percent+label')
                 st.plotly_chart(fig_pie, use_container_width=True)
-                
         else: st.info("👋 أهلاً بك! البيانات فارغة حالياً. اذهب إلى 'غرفة الإنقاذ' لإضافة خطتك الأولى.")
 
     elif menu == "الجدول اليومي":
@@ -409,12 +405,18 @@ def login_page():
                 if user: st.session_state.logged_in = True; st.session_state.user = user; st.rerun()
                 else: st.error("بيانات خاطئة!")
             
-            # --- التعديل هنا: وضع البيانات بجانب بعضها ---
+            # --- شريط معلومات الدخول (طالب + مدير) بجانب بعض ---
             st.markdown("""
-            <div style='background:rgba(0,0,0,0.3); padding:10px; border-radius:10px; margin-top:10px; display:flex; justify-content:space-around; align-items:center;'>
-                <span style='color:#bbb; font-size:0.85em'>👤 الطالب: <b style='color:white'>student</b> / <b style='color:white'>123</b></span>
-                <span style='color:#555'>|</span>
-                <span style='color:#bbb; font-size:0.85em'>👮 المدير: <b style='color:white'>admin</b> / <b style='color:white'>123</b></span>
+            <div style='background:rgba(30, 41, 59, 0.5); padding:12px; border-radius:12px; margin-top:15px; border:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-evenly; align-items:center; flex-wrap:wrap;'>
+                <div style='text-align:center; margin:5px;'>
+                    <span style='font-size:1.2em'>👤</span> 
+                    <span style='color:#bbb;'>طالب:</span> <b style='color:#4ade80'>student</b> / <b style='color:white'>123</b>
+                </div>
+                <div style='width:1px; height:20px; background:#555;'></div>
+                <div style='text-align:center; margin:5px;'>
+                    <span style='font-size:1.2em'>👮</span> 
+                    <span style='color:#bbb;'>مدير:</span> <b style='color:#f87171'>admin</b> / <b style='color:white'>123</b>
+                </div>
             </div>
             """, unsafe_allow_html=True)
             
